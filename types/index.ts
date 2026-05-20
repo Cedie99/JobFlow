@@ -1,0 +1,140 @@
+export type ApplicationStatus =
+  | 'applied'
+  | 'screening'
+  | 'interview'
+  | 'offer'
+  | 'rejected'
+  | 'withdrawn'
+
+export interface JobApplication {
+  id: string
+  user_id: string
+  company_name: string
+  job_title: string | null
+  job_posting_url: string | null
+  status: ApplicationStatus
+  applied_date: string
+  notes: string | null
+  salary_range: string | null
+  location: string | null
+  contact_name: string | null
+  contact_email: string | null
+  next_follow_up: string | null
+  resume_generated: boolean
+  created_at: string
+  updated_at: string
+}
+
+export interface OptimizeRequest {
+  resumeText: string
+  jobDescription: string
+}
+
+export interface ChatMessage {
+  role: 'user' | 'assistant'
+  content: string
+}
+
+export interface ProfileData {
+  fullName: string
+  email: string
+  phone: string
+  location: string
+  linkedin: string
+  github: string
+  summary: string
+  workStyle: string
+  careerGoals: string
+  personalityTraits: string[]
+  experience: ExperienceEntry[]
+  education: EducationEntry[]
+  projects: ProjectEntry[]
+  skills: SkillCategory[]
+  awards: AwardEntry[]
+  certifications: CertificationEntry[]
+}
+
+export interface CareerProfile {
+  id: string
+  user_id: string
+  name: string
+  interview_messages: ChatMessage[]
+  profile: ProfileData | null
+  completed: boolean
+  created_at: string
+  updated_at: string
+}
+
+export interface OptimizeResponse {
+  savedId?: string | null
+  matchScore?: number | null
+  matchWarning?: string | null
+  optimizedResume: {
+    contactInfo: ContactInfo
+    summary: string
+    education: EducationEntry[]
+    experience: ExperienceEntry[]
+    projects: ProjectEntry[]
+    skills: SkillCategory[]
+    awards: AwardEntry[]
+    certifications: CertificationEntry[]
+  }
+  coverLetter: string
+  emailMessage: string
+}
+
+export interface ContactInfo {
+  name: string
+  email: string
+  phone: string
+  location: string
+  linkedin: string
+  github: string
+}
+
+export interface SkillCategory {
+  category: string
+  items: string[]
+}
+
+export interface ExperienceEntry {
+  title: string
+  company: string
+  location: string
+  duration: string
+  bullets: string[]
+}
+
+export interface ProjectEntry {
+  name: string
+  techStack: string
+  duration: string
+  bullets: string[]
+}
+
+export interface EducationEntry {
+  degree: string
+  institution: string
+  location: string
+  year: string
+  gpa: string
+}
+
+export interface CertificationEntry {
+  name: string
+  issuer: string
+  year: string
+}
+
+export interface AwardEntry {
+  name: string
+  issuer: string
+  year: string
+}
+
+export interface SavedOptimization {
+  id: string
+  label: string
+  created_at: string
+  result?: OptimizeResponse
+}

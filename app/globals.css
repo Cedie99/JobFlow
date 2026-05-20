@@ -1,0 +1,188 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
+
+@custom-variant dark (&:is(.dark *));
+
+/* ─── Tailwind theme tokens — direct values override any shadcn defaults ─── */
+@theme inline {
+  --font-sans: var(--font-sans);
+  --font-mono: var(--font-geist-mono);
+
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+
+  /* Primary blue — set directly so shadcn base theme cannot override */
+  --color-primary: oklch(0.546 0.253 262);
+  --color-primary-foreground: oklch(1 0 0);
+
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-border: var(--border);
+  --color-input: var(--input);
+
+  /* Ring and sidebar primary also force blue */
+  --color-ring: oklch(0.546 0.253 262);
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: oklch(0.546 0.253 262);
+  --color-sidebar-primary-foreground: oklch(1 0 0);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: oklch(0.546 0.253 262);
+
+  --color-chart-1: oklch(0.546 0.253 262);
+  --color-chart-2: oklch(0.65 0.16 145);
+  --color-chart-3: oklch(0.68 0.16 55);
+  --color-chart-4: oklch(0.62 0.17 290);
+  --color-chart-5: oklch(0.60 0.22 25);
+
+  --radius-sm: calc(var(--radius) * 0.6);
+  --radius-md: calc(var(--radius) * 0.8);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) * 1.4);
+  --radius-2xl: calc(var(--radius) * 1.8);
+  --radius-3xl: calc(var(--radius) * 2.2);
+  --radius-4xl: calc(var(--radius) * 2.6);
+}
+
+/* ─── CSS variable definitions ─────────────────────────────────────────── */
+:root {
+  --background: oklch(0.97 0.006 245);
+  --foreground: oklch(0.13 0.01 250);
+  --card: oklch(1 0 0);
+  --card-foreground: oklch(0.13 0.01 250);
+  --popover: oklch(1 0 0);
+  --popover-foreground: oklch(0.13 0.01 250);
+  --primary: oklch(0.546 0.253 262);
+  --primary-foreground: oklch(1 0 0);
+  --secondary: oklch(0.93 0.025 255);
+  --secondary-foreground: oklch(0.30 0.12 262);
+  --muted: oklch(0.94 0.01 250);
+  --muted-foreground: oklch(0.50 0.03 255);
+  --accent: oklch(0.93 0.025 255);
+  --accent-foreground: oklch(0.30 0.12 262);
+  --destructive: oklch(0.577 0.245 27.325);
+  --border: oklch(0.88 0.015 250);
+  --input: oklch(0.91 0.012 250);
+  --ring: oklch(0.546 0.253 262);
+  --radius: 0.625rem;
+  --sidebar: oklch(1 0 0);
+  --sidebar-foreground: oklch(0.13 0.01 250);
+  --sidebar-primary: oklch(0.546 0.253 262);
+  --sidebar-primary-foreground: oklch(1 0 0);
+  --sidebar-accent: oklch(0.93 0.025 255);
+  --sidebar-accent-foreground: oklch(0.30 0.12 262);
+  --sidebar-border: oklch(0.88 0.015 250);
+  --sidebar-ring: oklch(0.546 0.253 262);
+}
+
+.dark {
+  --background: oklch(0.10 0.008 265);
+  --foreground: oklch(0.93 0.008 85);
+  --card: oklch(0.145 0.008 265);
+  --card-foreground: oklch(0.93 0.008 85);
+  --popover: oklch(0.16 0.008 265);
+  --popover-foreground: oklch(0.93 0.008 85);
+  --primary: oklch(0.62 0.22 255);
+  --primary-foreground: oklch(1 0 0);
+  --secondary: oklch(0.20 0.008 265);
+  --secondary-foreground: oklch(0.93 0.008 85);
+  --muted: oklch(0.18 0.008 265);
+  --muted-foreground: oklch(0.55 0.012 255);
+  --accent: oklch(0.20 0.008 265);
+  --accent-foreground: oklch(0.93 0.008 85);
+  --destructive: oklch(0.65 0.22 25);
+  --border: oklch(0.23 0.008 265);
+  --input: oklch(0.20 0.008 265);
+  --ring: oklch(0.62 0.22 255);
+  --sidebar: oklch(0.12 0.008 265);
+  --sidebar-foreground: oklch(0.93 0.008 85);
+  --sidebar-primary: oklch(0.62 0.22 255);
+  --sidebar-primary-foreground: oklch(1 0 0);
+  --sidebar-accent: oklch(0.18 0.008 265);
+  --sidebar-accent-foreground: oklch(0.93 0.008 85);
+  --sidebar-border: oklch(0.20 0.008 265);
+  --sidebar-ring: oklch(0.62 0.22 255);
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+  html {
+    @apply font-sans;
+  }
+
+  /* Smooth button press */
+  button:not(:disabled),
+  [role="button"]:not(:disabled) {
+    @apply transition-all duration-150;
+  }
+  button:not(:disabled):active,
+  [role="button"]:not(:disabled):active {
+    transform: scale(0.97);
+  }
+}
+
+/* ─── Microinteraction utilities ────────────────────────────────────────── */
+@layer utilities {
+  .hover-lift {
+    @apply transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md;
+  }
+  .nav-item-active {
+    position: relative;
+  }
+  .nav-item-active::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 3px;
+    height: 60%;
+    border-radius: 0 4px 4px 0;
+    background-color: oklch(0.546 0.253 262);
+  }
+}
+
+/* ─── Overdue pulse animation ───────────────────────────────────────────── */
+@keyframes pulse-dot {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
+}
+.pulse-dot {
+  animation: pulse-dot 1.8s ease-in-out infinite;
+}
+
+/* ─── Staggered row fade-in ─────────────────────────────────────────────── */
+@keyframes row-in {
+  from { opacity: 0; transform: translateY(4px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.row-animate {
+  animation: row-in 0.18s ease-out both;
+}
+
+/* ─── Stat counter pop ──────────────────────────────────────────────────── */
+@keyframes count-pop {
+  0%   { transform: scale(0.85); opacity: 0; }
+  70%  { transform: scale(1.05); }
+  100% { transform: scale(1);    opacity: 1; }
+}
+.count-pop {
+  animation: count-pop 0.35s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}
