@@ -25,12 +25,18 @@ export async function POST(req: NextRequest) {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-  const { label, result } = await req.json()
+  let body: { label?: string; result?: unknown; job_description?: string }
+  try {
+    body = await req.json()
+  } catch {
+    return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 })
+  }
+  const { label, result, job_description = '' } = body
   if (!label?.trim() || !result) return NextResponse.json({ error: 'label and result are required' }, { status: 400 })
 
   const { data, error } = await supabase
     .from('resume_optimizations')
-    .insert({ user_id: user.id, label: label.trim(), job_description: '', result })
+    .insert({ user_id: user.id, label: label.trim(), job_description, result })
     .select('id')
     .single()
 

@@ -10,7 +10,7 @@ import { Textarea } from '@/components/ui/textarea'
 import { Progress } from '@/components/ui/progress'
 import {
   Wand2, Loader2, Briefcase, Code, Target, Layers,
-  ChevronDown, CheckCircle, Clock, Plus,
+  ChevronDown, CheckCircle, Clock, Plus, ArrowRight,
 } from 'lucide-react'
 import { toast } from 'sonner'
 import type { OptimizeResponse } from '@/types'
@@ -105,9 +105,23 @@ function BuildPageInner() {
           <Wand2 className="h-5 w-5 text-primary" />
           <h1 className="text-2xl font-bold">Build Resume from Profile</h1>
         </div>
-        <p className="text-muted-foreground text-sm">
-          Pick a career profile and paste a job description — Claude builds a tailored resume from scratch.
-        </p>
+        {/* Visual flow indicator */}
+        <div className="flex items-center gap-2 text-sm text-muted-foreground flex-wrap">
+          <span className="flex items-center gap-1.5">
+            <Layers className="h-3.5 w-3.5 text-primary/70" />
+            <span className="font-medium text-foreground/70">Career Profile</span>
+          </span>
+          <ArrowRight className="h-3.5 w-3.5 opacity-30" />
+          <span className="flex items-center gap-1.5">
+            <Target className="h-3.5 w-3.5" />
+            <span>Any Job Posting</span>
+          </span>
+          <ArrowRight className="h-3.5 w-3.5 opacity-30" />
+          <span className="flex items-center gap-1.5 text-emerald-600 font-medium">
+            <Wand2 className="h-3.5 w-3.5" />
+            Tailored Resume in Seconds
+          </span>
+        </div>
       </div>
 
       <div className={`grid gap-6 flex-1 min-h-0 ${result ? 'grid-cols-1 lg:grid-cols-2' : 'grid-cols-1 max-w-3xl'}`}>
@@ -133,11 +147,37 @@ function BuildPageInner() {
                   Loading profiles…
                 </div>
               ) : profiles.length === 0 ? (
-                <div className="text-center py-3 space-y-3">
-                  <p className="text-sm text-muted-foreground">No career profiles yet.</p>
-                  <Button size="sm" variant="outline" onClick={() => router.push('/profiles')}>
+                <div className="space-y-4 py-1">
+                  <div className="rounded-lg border border-dashed border-border bg-muted/30 p-4 space-y-3">
+                    <div className="flex items-start gap-3">
+                      <div className="rounded-lg bg-primary/10 p-2 shrink-0 mt-0.5">
+                        <Layers className="h-4 w-4 text-primary" />
+                      </div>
+                      <div>
+                        <p className="text-xs font-semibold">Career profiles power this builder</p>
+                        <p className="text-[11px] text-muted-foreground mt-1 leading-relaxed">
+                          Create a profile by doing a 10-minute AI interview about your background for a specific career path.
+                          Once saved, paste any job description — software engineering, QA, marketing, customer service,
+                          anything — and get a tailored resume in seconds.
+                        </p>
+                      </div>
+                    </div>
+                    <div className="pl-[44px] space-y-1.5">
+                      {[
+                        'One AI interview per career path (5–10 min)',
+                        'Generate unlimited resumes from each profile',
+                        'Works for IT and non-IT roles equally',
+                      ].map((point, i) => (
+                        <div key={i} className="flex items-center gap-2">
+                          <CheckCircle className="h-3 w-3 text-primary/50 shrink-0" />
+                          <p className="text-[11px] text-muted-foreground">{point}</p>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                  <Button size="sm" className="w-full" onClick={() => router.push('/profiles')}>
                     <Plus className="h-3.5 w-3.5 mr-1.5" />
-                    Create a Profile
+                    Create your first career profile
                   </Button>
                 </div>
               ) : (

@@ -24,12 +24,27 @@ interface SidebarProps {
   userEmail: string
 }
 
-const navItems = [
-  { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
-  { href: '/profiles', label: 'Career Profiles', icon: Layers },
-  { href: '/resume', label: 'Resume Optimizer', icon: FileText },
-  { href: '/build', label: 'Build Resume', icon: Wand2 },
-  { href: '/tracker', label: 'Application Tracker', icon: ClipboardList },
+const navGroups = [
+  {
+    label: null as string | null,
+    items: [
+      { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
+    ],
+  },
+  {
+    label: 'AI Resume Builder',
+    items: [
+      { href: '/profiles', label: 'Career Profiles', icon: Layers },
+      { href: '/build', label: 'Build Resume', icon: Wand2 },
+    ],
+  },
+  {
+    label: null as string | null,
+    items: [
+      { href: '/resume', label: 'Resume Optimizer', icon: FileText },
+      { href: '/tracker', label: 'Application Tracker', icon: ClipboardList },
+    ],
+  },
 ]
 
 export default function Sidebar({ userEmail }: SidebarProps) {
@@ -84,43 +99,60 @@ export default function Sidebar({ userEmail }: SidebarProps) {
       </div>
 
       {/* ── Nav ────────────────────────────────────────────── */}
-      <nav className={cn('flex-1 py-3 space-y-0.5', collapsed ? 'px-2' : 'px-3')}>
-        {navItems.map(({ href, label, icon: Icon }) => {
-          const isActive = pathname === href || (href !== '/dashboard' && pathname.startsWith(href))
-          return (
-            <Link key={href} href={href} title={collapsed ? label : undefined}>
-              <div
-                className={cn(
-                  'group relative flex items-center gap-2.5 rounded-lg text-sm font-medium transition-all duration-150',
-                  collapsed ? 'justify-center p-2.5' : 'px-3 py-2',
-                  isActive
-                    ? 'bg-primary/[0.08] text-primary font-semibold ring-1 ring-primary/[0.12]'
-                    : 'text-muted-foreground hover:bg-sidebar-accent hover:text-foreground hover:translate-x-0.5'
-                )}
-              >
-                {/* Left accent bar */}
-                {isActive && (
-                  <span className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-7 bg-primary rounded-r-full" />
-                )}
+      <nav className={cn('flex-1 py-3', collapsed ? 'px-2' : 'px-3')}>
+        {navGroups.map((group, gi) => (
+          <div key={gi} className={gi > 0 ? 'mt-4' : ''}>
+            {/* Section label */}
+            {group.label && !collapsed && (
+              <p className="text-[9px] font-semibold uppercase tracking-widest text-muted-foreground/40 px-3 mb-1.5 select-none">
+                {group.label}
+              </p>
+            )}
+            {/* Collapsed divider */}
+            {group.label && collapsed && (
+              <div className="h-px bg-sidebar-border mx-1 mb-2 mt-1" />
+            )}
 
-                {/* Icon roundel */}
-                <span className={cn(
-                  'inline-flex items-center justify-center w-7 h-7 rounded-md shrink-0 transition-colors duration-150',
-                  isActive
-                    ? 'bg-primary/15'
-                    : 'group-hover:bg-primary/[0.06]'
-                )}>
-                  <Icon className={cn(
-                    'h-4 w-4 shrink-0 transition-transform duration-150',
-                    !isActive && 'group-hover:scale-110'
-                  )} />
-                </span>
+            <div className="space-y-0.5">
+              {group.items.map(({ href, label, icon: Icon }) => {
+                const isActive = pathname === href || (href !== '/dashboard' && pathname.startsWith(href))
+                return (
+                  <Link key={href} href={href} title={collapsed ? label : undefined}>
+                    <div
+                      className={cn(
+                        'group relative flex items-center gap-2.5 rounded-lg text-sm font-medium transition-all duration-150',
+                        collapsed ? 'justify-center p-2.5' : 'px-3 py-2',
+                        isActive
+                          ? 'bg-primary/[0.08] text-primary font-semibold ring-1 ring-primary/[0.12]'
+                          : 'text-muted-foreground hover:bg-sidebar-accent hover:text-foreground hover:translate-x-0.5'
+                      )}
+                    >
+                      {/* Left accent bar */}
+                      {isActive && (
+                        <span className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-7 bg-primary rounded-r-full" />
+                      )}
 
-                {!collapsed && label}
-              </div>
-            </Link>
-          )
-        })}
+                      {/* Icon roundel */}
+                      <span className={cn(
+                        'inline-flex items-center justify-center w-7 h-7 rounded-md shrink-0 transition-colors duration-150',
+                        isActive
+                          ? 'bg-primary/15'
+                          : 'group-hover:bg-primary/[0.06]'
+                      )}>
+                        <Icon className={cn(
+                          'h-4 w-4 shrink-0 transition-transform duration-150',
+                          !isActive && 'group-hover:scale-110'
+                        )} />
+                      </span>
+
+                      {!collapsed && label}
+                    </div>
+                  </Link>
+                )
+              })}
+            </div>
+          </div>
+        ))}
       </nav>
 
       {/* ── User ───────────────────────────────────────────── */}

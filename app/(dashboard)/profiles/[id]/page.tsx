@@ -18,17 +18,19 @@ export default function ProfileInterviewPage() {
   const [loading, setLoading] = useState(false)
   const [isComplete, setIsComplete] = useState(false)
   const [synthesizing, setSynthesizing] = useState(false)
-  const [userMessageCount, setUserMessageCount] = useState(0)
   const [profileLoading, setProfileLoading] = useState(true)
   const [completed, setCompleted] = useState(false)
   const bottomRef = useRef<HTMLDivElement>(null)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
   const startedRef = useRef(false)
+  const completingRef = useRef(false)
 
   useEffect(() => {
     async function loadProfile() {
       try {
-        const res = await fetch(`/api/career-profiles/${id}`)
+        const res = await fetch(`/api/career-profiles/${id}`, {
+          signal: AbortSignal.timeout(10_000),
+        })
         if (!res.ok) throw new Error()
         const data = await res.json()
         setProfileName(data.name)
@@ -37,8 +39,6 @@ export default function ProfileInterviewPage() {
         const existingMessages: ChatMessage[] = data.interview_messages ?? []
         if (existingMessages.length > 0) {
           setMessages(existingMessages)
-          const userMsgs = existingMessages.filter((m: ChatMessage) => m.role === 'user').length
-          setUserMessageCount(userMsgs)
           if (data.completed) setIsComplete(true)
         } else {
           // Fresh profile — start the interview
@@ -70,6 +70,7 @@ export default function ProfileInterviewPage() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ messages: [], profileId: id, profileName: name }),
+        signal: AbortSignal.timeout(30_000),
       })
       if (!res.ok) throw new Error()
       const data = await res.json()
@@ -88,6 +89,7 @@ export default function ProfileInterviewPage() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ messages: history, profileId: id, profileName }),
+        signal: AbortSignal.timeout(30_000),
       })
       if (!res.ok) throw new Error()
       const data = await res.json()
@@ -108,18 +110,20 @@ export default function ProfileInterviewPage() {
     const userMsg: ChatMessage = { role: 'user', content: text }
     const updatedMessages = [...messages, userMsg]
     setMessages(updatedMessages)
-    setUserMessageCount(c => c + 1)
     await sendMessage(updatedMessages)
     textareaRef.current?.focus()
   }
 
   async function handleComplete() {
+    if (completingRef.current) return
+    completingRef.current = true
     setSynthesizing(true)
     try {
       const res = await fetch('/api/onboarding/complete', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ messages, profileId: id }),
+        signal: AbortSignal.timeout(60_000),
       })
       if (!res.ok) throw new Error()
       setCompleted(true)
@@ -127,6 +131,7 @@ export default function ProfileInterviewPage() {
     } catch {
       toast.error('Could not save your profile. Please try again.')
     } finally {
+      completingRef.current = false
       setSynthesizing(false)
     }
   }
@@ -203,7 +208,7 @@ export default function ProfileInterviewPage() {
             </button>
             <div>
               <p className="text-sm font-semibold leading-none">{profileName}</p>
-              <p className="text-[10px] text-muted-foreground mt-0.5">Career Profile Interview</p>
+              <p className="text-[10px] text-muted-foreground mt-0.5">Guided Skills Interview</p>
             </div>
           </div>
           <div className="h-8 w-8 rounded-full bg-primary flex items-center justify-center text-xs font-bold text-primary-foreground">
@@ -214,13 +219,35 @@ export default function ProfileInterviewPage() {
 
       {/* Intro banner */}
       {messages.length <= 1 && !loading && (
-        <div className="max-w-2xl mx-auto px-4 pt-5 w-full">
-          <div className="rounded-xl bg-primary/[0.06] border border-primary/15 px-4 py-3 flex gap-3">
-            <Sparkles className="h-4 w-4 text-primary shrink-0 mt-0.5" />
+        <div className="max-w-2xl mx-auto px-4 pt-5 w-full space-y-2">
+          <div className="rounded-xl bg-primary/[0.06] border border-primary/15 px-4 py-4 space-y-2.5">
+            <div className="flex items-center gap-2">
+              <Sparkles className="h-3.5 w-3.5 text-primary shrink-0" />
+              <span className="text-xs font-semibold text-primary">Guided Behavioral Interview</span>
+              <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-primary/15 text-primary font-semibold uppercase tracking-wide">
+                5–10 min
+              </span>
+            </div>
             <p className="text-xs text-muted-foreground leading-relaxed">
-              <span className="text-foreground font-medium">This takes 5–10 minutes.</span>{' '}
-              Cedie will chat with you about your {profileName} background, skills, and goals. The more you share, the better your AI-generated resumes will be.
+              Cedie will ask about real experiences from your life — work, school, hobbies, anything.
+              Even if your background seems unrelated to <span className="text-foreground font-medium">{profileName}</span>,
+              he&apos;ll help you uncover transferable skills you might not realize you have.
+              Answer honestly — the more genuine your answers, the stronger your profile will be.
             </p>
+            <div className="border-t border-primary/10 pt-2.5 space-y-1.5">
+              {[
+                'Cedie asks about real situations, not hypotheticals — "tell me about a time…"',
+                'If your answer seems off-topic, he\'ll find what\'s transferable and dig deeper',
+                'Don\'t filter yourself — there are no wrong answers, only unexplored ones',
+              ].map((tip, i) => (
+                <div key={i} className="flex items-start gap-2">
+                  <span className="shrink-0 h-3.5 w-3.5 rounded-full bg-primary/20 text-primary text-[8px] font-bold flex items-center justify-center mt-0.5">
+                    {i + 1}
+                  </span>
+                  <p className="text-[10px] text-muted-foreground leading-relaxed">{tip}</p>
+                </div>
+              ))}
+            </div>
           </div>
         </div>
       )}
@@ -287,20 +314,15 @@ export default function ProfileInterviewPage() {
       {/* Input area */}
       <div className="shrink-0 border-t border-border bg-card">
         <div className="max-w-2xl mx-auto px-4 py-4 space-y-3">
-          {(isComplete || userMessageCount >= 4) && (
+          {isComplete && (
             <Button
               onClick={handleComplete}
               disabled={synthesizing || loading}
-              className={cn(
-                'w-full gap-2 transition-all',
-                isComplete
-                  ? 'bg-emerald-600 hover:bg-emerald-700 text-white'
-                  : 'bg-primary/10 text-primary hover:bg-primary/20 border border-primary/20'
-              )}
+              className="w-full gap-2 bg-emerald-600 hover:bg-emerald-700 text-white transition-all"
               variant="ghost"
             >
               <CheckCircle className="h-4 w-4" />
-              {isComplete ? 'Save Profile' : "I'm done — save my profile"}
+              Save Profile
             </Button>
           )}
 
