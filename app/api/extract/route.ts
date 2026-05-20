@@ -11,6 +11,11 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'No file provided' }, { status: 400 })
     }
 
+    const MAX_BYTES = 50 * 1024 * 1024 // 50 MB
+    if (file.size > MAX_BYTES) {
+      return NextResponse.json({ error: 'File too large (max 50 MB)' }, { status: 413 })
+    }
+
     const arrayBuffer = await file.arrayBuffer()
     const buffer = Buffer.from(arrayBuffer)
     const filename = file.name.toLowerCase()

@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import {
   FileText, ClipboardList, Plus, AlertCircle, CheckCircle2,
-  ExternalLink, Bell, Calendar, ArrowRight,
+  ExternalLink, Bell, Calendar, ArrowRight, Layers, Wand2,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { format, formatDistanceToNowStrict, isBefore, isToday, isTomorrow, addDays, startOfDay, differenceInCalendarDays } from 'date-fns'
@@ -283,6 +283,37 @@ export default async function DashboardPage() {
               <CardTitle className="text-sm font-semibold">Quick Actions</CardTitle>
             </CardHeader>
             <CardContent className="space-y-2">
+              {/* AI Resume Builder — shown as a connected pair */}
+              <div className="rounded-lg border border-primary/15 bg-primary/[0.02] overflow-hidden">
+                <p className="px-3 pt-2 pb-1 text-[9px] font-semibold uppercase tracking-widest text-primary/50 select-none">
+                  AI Resume Builder
+                </p>
+                <Link href="/profiles" className="block">
+                  <div className="flex items-center gap-3 px-3 py-2 hover:bg-primary/[0.06] transition-colors group cursor-pointer border-t border-primary/10">
+                    <div className="rounded-md bg-primary/10 p-1.5 shrink-0">
+                      <Layers className="h-3.5 w-3.5 text-primary" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-xs font-medium">Career Profiles</p>
+                      <p className="text-[10px] text-muted-foreground">AI interview for each career path</p>
+                    </div>
+                    <ArrowRight className="h-3.5 w-3.5 text-primary/30 group-hover:text-primary group-hover:translate-x-0.5 transition-all" />
+                  </div>
+                </Link>
+                <Link href="/build" className="block">
+                  <div className="flex items-center gap-3 px-3 py-2 hover:bg-primary/[0.06] transition-colors group cursor-pointer border-t border-primary/10">
+                    <div className="rounded-md bg-primary/10 p-1.5 shrink-0">
+                      <Wand2 className="h-3.5 w-3.5 text-primary" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-xs font-medium">Build Resume</p>
+                      <p className="text-[10px] text-muted-foreground">Paste job → tailored resume</p>
+                    </div>
+                    <ArrowRight className="h-3.5 w-3.5 text-primary/30 group-hover:text-primary group-hover:translate-x-0.5 transition-all" />
+                  </div>
+                </Link>
+              </div>
+
               <Link href="/resume" className="block">
                 <div className="flex items-center gap-3 rounded-lg border border-border px-3 py-2.5 hover:border-primary/30 hover:bg-primary/[0.03] transition-all group cursor-pointer">
                   <div className="rounded-md bg-primary/10 p-1.5 shrink-0">
