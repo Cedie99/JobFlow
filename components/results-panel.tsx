@@ -7,13 +7,31 @@ import { Badge } from '@/components/ui/badge'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog'
-import { Copy, Check, FileText, Mail, Send, Pencil, Download, Save, X, Plus, Loader2, AlertTriangle } from 'lucide-react'
+import { Copy, Check, FileText, Mail, Send, Pencil, Download, Save, X, Plus, Loader2, AlertTriangle, Trash2 } from 'lucide-react'
 import { toast } from 'sonner'
 import type { OptimizeResponse, ContactInfo, ExperienceEntry, ProjectEntry, EducationEntry, AwardEntry, CertificationEntry } from '@/types'
 
 interface ResultsPanelProps {
   result: OptimizeResponse
   onResultChange: (r: OptimizeResponse) => void
+}
+
+function isUrl(s: string) {
+  return /^https?:\/\//i.test(s) || /^(www\.|linkedin\.com|github\.com)/i.test(s)
+}
+function toHref(s: string) {
+  return /^https?:\/\//i.test(s) ? s : `https://${s}`
+}
+function ContactLink({ value, fallbackLabel }: { value: string; fallbackLabel: string }) {
+  if (!value) return null
+  if (isUrl(value)) {
+    return (
+      <a href={toHref(value)} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">
+        {fallbackLabel}
+      </a>
+    )
+  }
+  return <span>{value}</span>
 }
 
 function CopyButton({ text }: { text: string }) {
@@ -156,6 +174,24 @@ export default function ResultsPanel({ result, onResultChange }: ResultsPanelPro
   function upCert(i: number, field: keyof CertificationEntry, val: string) {
     setDraft(d => ({ ...d, optimizedResume: { ...d.optimizedResume, certifications: (d.optimizedResume.certifications ?? []).map((c, idx) => idx === i ? { ...c, [field]: val } : c) } }))
   }
+  function removeEdu(i: number) {
+    setDraft(d => ({ ...d, optimizedResume: { ...d.optimizedResume, education: d.optimizedResume.education.filter((_, idx) => idx !== i) } }))
+  }
+  function removeExp(i: number) {
+    setDraft(d => ({ ...d, optimizedResume: { ...d.optimizedResume, experience: d.optimizedResume.experience.filter((_, idx) => idx !== i) } }))
+  }
+  function removeProj(i: number) {
+    setDraft(d => ({ ...d, optimizedResume: { ...d.optimizedResume, projects: d.optimizedResume.projects.filter((_, idx) => idx !== i) } }))
+  }
+  function removeSkillGroup(i: number) {
+    setDraft(d => ({ ...d, optimizedResume: { ...d.optimizedResume, skills: d.optimizedResume.skills.filter((_, idx) => idx !== i) } }))
+  }
+  function removeAward(i: number) {
+    setDraft(d => ({ ...d, optimizedResume: { ...d.optimizedResume, awards: (d.optimizedResume.awards ?? []).filter((_, idx) => idx !== i) } }))
+  }
+  function removeCert(i: number) {
+    setDraft(d => ({ ...d, optimizedResume: { ...d.optimizedResume, certifications: (d.optimizedResume.certifications ?? []).filter((_, idx) => idx !== i) } }))
+  }
 
   // --- Actions ---
   function handleDiscard() { setDraft(result); setEditing(false) }
@@ -283,7 +319,13 @@ export default function ResultsPanel({ result, onResultChange }: ResultsPanelPro
                   <>
                     <h2 className="text-base font-bold">{r.contactInfo.name}</h2>
                     {contactLine && <p className="text-xs text-muted-foreground mt-1">{contactLine}</p>}
-                    {linksLine && <p className="text-xs text-muted-foreground">{linksLine}</p>}
+                    {(r.contactInfo.linkedin || r.contactInfo.github) && (
+                      <p className="text-xs text-muted-foreground flex items-center justify-center gap-1.5 flex-wrap mt-0.5">
+                        {r.contactInfo.linkedin && <ContactLink value={r.contactInfo.linkedin} fallbackLabel="LinkedIn" />}
+                        {r.contactInfo.linkedin && r.contactInfo.github && <span className="text-muted-foreground/40">|</span>}
+                        {r.contactInfo.github && <ContactLink value={r.contactInfo.github} fallbackLabel="GitHub" />}
+                      </p>
+                    )}
                   </>
                 )}
               </section>
@@ -302,12 +344,19 @@ export default function ResultsPanel({ result, onResultChange }: ResultsPanelPro
                   <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-2">Education</h3>
                   <div className="space-y-3">
                     {r.education.map((edu, i) => editing ? (
-                      <div key={i} className="grid grid-cols-2 gap-2 p-2 border rounded-lg">
-                        <Input placeholder="Degree" value={edu.degree} onChange={e => upEdu(i, 'degree', e.target.value)} />
-                        <Input placeholder="Institution" value={edu.institution} onChange={e => upEdu(i, 'institution', e.target.value)} />
-                        <Input placeholder="Location" value={edu.location} onChange={e => upEdu(i, 'location', e.target.value)} />
-                        <Input placeholder="Year" value={edu.year} onChange={e => upEdu(i, 'year', e.target.value)} />
-                        <Input className="col-span-2" placeholder="GPA (optional)" value={edu.gpa} onChange={e => upEdu(i, 'gpa', e.target.value)} />
+                      <div key={i} className="p-2 border rounded-lg space-y-2">
+                        <div className="flex justify-end">
+                          <Button size="icon" variant="ghost" className="h-6 w-6 text-muted-foreground hover:text-destructive" onClick={() => removeEdu(i)}>
+                            <Trash2 className="h-3.5 w-3.5" />
+                          </Button>
+                        </div>
+                        <div className="grid grid-cols-2 gap-2">
+                          <Input placeholder="Degree" value={edu.degree} onChange={e => upEdu(i, 'degree', e.target.value)} />
+                          <Input placeholder="Institution" value={edu.institution} onChange={e => upEdu(i, 'institution', e.target.value)} />
+                          <Input placeholder="Location" value={edu.location} onChange={e => upEdu(i, 'location', e.target.value)} />
+                          <Input placeholder="Year" value={edu.year} onChange={e => upEdu(i, 'year', e.target.value)} />
+                          <Input className="col-span-2" placeholder="GPA (optional)" value={edu.gpa} onChange={e => upEdu(i, 'gpa', e.target.value)} />
+                        </div>
                       </div>
                     ) : (
                       <div key={i} className="flex items-start justify-between gap-2">
@@ -331,6 +380,11 @@ export default function ResultsPanel({ result, onResultChange }: ResultsPanelPro
                       <div key={i} className={editing ? 'border rounded-lg p-3 space-y-2' : ''}>
                         {editing ? (
                           <>
+                            <div className="flex justify-end">
+                              <Button size="icon" variant="ghost" className="h-6 w-6 text-muted-foreground hover:text-destructive" onClick={() => removeExp(i)}>
+                                <Trash2 className="h-3.5 w-3.5" />
+                              </Button>
+                            </div>
                             <div className="grid grid-cols-2 gap-2">
                               <Input placeholder="Job Title" value={exp.title} onChange={e => upExpField(i, 'title', e.target.value)} />
                               <Input placeholder="Company" value={exp.company} onChange={e => upExpField(i, 'company', e.target.value)} />
@@ -386,6 +440,11 @@ export default function ResultsPanel({ result, onResultChange }: ResultsPanelPro
                       <div key={i} className={editing ? 'border rounded-lg p-3 space-y-2' : ''}>
                         {editing ? (
                           <>
+                            <div className="flex justify-end">
+                              <Button size="icon" variant="ghost" className="h-6 w-6 text-muted-foreground hover:text-destructive" onClick={() => removeProj(i)}>
+                                <Trash2 className="h-3.5 w-3.5" />
+                              </Button>
+                            </div>
                             <div className="grid grid-cols-2 gap-2">
                               <Input placeholder="Project Name" value={proj.name} onChange={e => upProjField(i, 'name', e.target.value)} />
                               <Input placeholder="Duration" value={proj.duration} onChange={e => upProjField(i, 'duration', e.target.value)} />
@@ -441,6 +500,9 @@ export default function ResultsPanel({ result, onResultChange }: ResultsPanelPro
                         <div key={i} className="flex gap-2 items-start">
                           <Input className="w-36 shrink-0 text-xs" placeholder="Category" value={group.category} onChange={e => upSkillCategory(i, e.target.value)} />
                           <Textarea className="text-xs min-h-[52px] flex-1" placeholder="Comma-separated skills" value={group.items.join(', ')} onChange={e => upSkillItems(i, e.target.value)} />
+                          <Button size="icon" variant="ghost" className="h-8 w-8 shrink-0 text-muted-foreground hover:text-destructive" onClick={() => removeSkillGroup(i)}>
+                            <Trash2 className="h-3.5 w-3.5" />
+                          </Button>
                         </div>
                       ))}
                     </div>
@@ -465,10 +527,13 @@ export default function ResultsPanel({ result, onResultChange }: ResultsPanelPro
                   <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-2">Awards & Honors</h3>
                   <div className="space-y-2">
                     {r.awards.map((award, i) => editing ? (
-                      <div key={i} className="grid grid-cols-3 gap-2">
-                        <Input className="col-span-1 text-xs" placeholder="Award Name" value={award.name} onChange={e => upAward(i, 'name', e.target.value)} />
-                        <Input className="text-xs" placeholder="Issuer" value={award.issuer} onChange={e => upAward(i, 'issuer', e.target.value)} />
-                        <Input className="text-xs" placeholder="Year" value={award.year} onChange={e => upAward(i, 'year', e.target.value)} />
+                      <div key={i} className="flex gap-2 items-center">
+                        <Input className="flex-1 text-xs" placeholder="Award Name" value={award.name} onChange={e => upAward(i, 'name', e.target.value)} />
+                        <Input className="flex-1 text-xs" placeholder="Issuer" value={award.issuer} onChange={e => upAward(i, 'issuer', e.target.value)} />
+                        <Input className="w-20 shrink-0 text-xs" placeholder="Year" value={award.year} onChange={e => upAward(i, 'year', e.target.value)} />
+                        <Button size="icon" variant="ghost" className="h-8 w-8 shrink-0 text-muted-foreground hover:text-destructive" onClick={() => removeAward(i)}>
+                          <Trash2 className="h-3.5 w-3.5" />
+                        </Button>
                       </div>
                     ) : (
                       <div key={i} className="flex items-center justify-between gap-2">
@@ -489,10 +554,13 @@ export default function ResultsPanel({ result, onResultChange }: ResultsPanelPro
                   <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-2">Certifications</h3>
                   <div className="space-y-2">
                     {r.certifications.map((cert, i) => editing ? (
-                      <div key={i} className="grid grid-cols-3 gap-2">
-                        <Input className="col-span-1 text-xs" placeholder="Certification" value={cert.name} onChange={e => upCert(i, 'name', e.target.value)} />
-                        <Input className="text-xs" placeholder="Issuer" value={cert.issuer} onChange={e => upCert(i, 'issuer', e.target.value)} />
-                        <Input className="text-xs" placeholder="Year" value={cert.year} onChange={e => upCert(i, 'year', e.target.value)} />
+                      <div key={i} className="flex gap-2 items-center">
+                        <Input className="flex-1 text-xs" placeholder="Certification" value={cert.name} onChange={e => upCert(i, 'name', e.target.value)} />
+                        <Input className="flex-1 text-xs" placeholder="Issuer" value={cert.issuer} onChange={e => upCert(i, 'issuer', e.target.value)} />
+                        <Input className="w-20 shrink-0 text-xs" placeholder="Year" value={cert.year} onChange={e => upCert(i, 'year', e.target.value)} />
+                        <Button size="icon" variant="ghost" className="h-8 w-8 shrink-0 text-muted-foreground hover:text-destructive" onClick={() => removeCert(i)}>
+                          <Trash2 className="h-3.5 w-3.5" />
+                        </Button>
                       </div>
                     ) : (
                       <div key={i} className="flex items-center justify-between gap-2">
