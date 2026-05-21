@@ -22,11 +22,9 @@ export async function POST(request: NextRequest) {
     let text = ''
 
     if (filename.endsWith('.pdf')) {
-      const { PDFParse } = await import('pdf-parse')
-      const parser = new PDFParse({ data: new Uint8Array(buffer) })
-      const result = await parser.getText()
-      await parser.destroy()
-      text = result.text
+      const { extractText } = await import('unpdf')
+      const { text: pages } = await extractText(new Uint8Array(buffer), { mergePages: true })
+      text = Array.isArray(pages) ? pages.join('\n') : pages
     } else if (filename.endsWith('.docx')) {
       const mammoth = await import('mammoth')
       const result = await mammoth.extractRawText({ buffer })
