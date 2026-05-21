@@ -106,8 +106,25 @@ const LABEL_SUGGESTIONS = [
   'Resume for DevOps Engineer',
 ]
 
+function isValidUrl(s: string) {
+  return /^https?:\/\//i.test(s)
+}
+function normalizeResult(r: OptimizeResponse): OptimizeResponse {
+  return {
+    ...r,
+    optimizedResume: {
+      ...r.optimizedResume,
+      contactInfo: {
+        ...r.optimizedResume.contactInfo,
+        linkedin: isValidUrl(r.optimizedResume.contactInfo.linkedin) ? r.optimizedResume.contactInfo.linkedin : '',
+        github: isValidUrl(r.optimizedResume.contactInfo.github) ? r.optimizedResume.contactInfo.github : '',
+      },
+    },
+  }
+}
+
 export default function ResultsPanel({ result, onResultChange }: ResultsPanelProps) {
-  const [draft, setDraft] = useState<OptimizeResponse>(result)
+  const [draft, setDraft] = useState<OptimizeResponse>(() => normalizeResult(result))
   const [editing, setEditing] = useState(false)
   const [savedId, setSavedId] = useState<string | null>(result.savedId ?? null)
   const [saveDialogOpen, setSaveDialogOpen] = useState(false)
@@ -115,7 +132,7 @@ export default function ResultsPanel({ result, onResultChange }: ResultsPanelPro
   const [saving, setSaving] = useState(false)
 
   useEffect(() => {
-    setDraft(result)
+    setDraft(normalizeResult(result))
     setEditing(false)
     setSavedId(result.savedId ?? null)
   }, [result])
@@ -309,30 +326,40 @@ export default function ResultsPanel({ result, onResultChange }: ResultsPanelPro
                     <Input placeholder="Phone" value={r.contactInfo.phone} onChange={e => upContact('phone', e.target.value)} />
                     <Input placeholder="Location" value={r.contactInfo.location} onChange={e => upContact('location', e.target.value)} />
                     <div className="space-y-1">
-                      <Input placeholder="LinkedIn display text" value={r.contactInfo.linkedinLabel ?? 'LinkedIn'} onChange={e => upContact('linkedinLabel', e.target.value)} className="h-8 text-xs" />
-                      <Input placeholder="LinkedIn URL" value={r.contactInfo.linkedin} onChange={e => upContact('linkedin', e.target.value)} />
+                      <Input placeholder="Display text (e.g. LinkedIn)" value={r.contactInfo.linkedinLabel ?? 'LinkedIn'} onChange={e => upContact('linkedinLabel', e.target.value)} />
+                      <Input
+                        placeholder="Paste URL to make it clickable"
+                        value={r.contactInfo.linkedin}
+                        onChange={e => upContact('linkedin', e.target.value)}
+                        className={!r.contactInfo.linkedin ? 'border-dashed text-xs placeholder:text-muted-foreground/50' : 'text-xs'}
+                      />
                     </div>
                     <div className="space-y-1">
-                      <Input placeholder="GitHub display text" value={r.contactInfo.githubLabel ?? 'GitHub'} onChange={e => upContact('githubLabel', e.target.value)} className="h-8 text-xs" />
-                      <Input placeholder="GitHub URL" value={r.contactInfo.github} onChange={e => upContact('github', e.target.value)} />
+                      <Input placeholder="Display text (e.g. GitHub)" value={r.contactInfo.githubLabel ?? 'GitHub'} onChange={e => upContact('githubLabel', e.target.value)} />
+                      <Input
+                        placeholder="Paste URL to make it clickable"
+                        value={r.contactInfo.github}
+                        onChange={e => upContact('github', e.target.value)}
+                        className={!r.contactInfo.github ? 'border-dashed text-xs placeholder:text-muted-foreground/50' : 'text-xs'}
+                      />
                     </div>
                   </div>
                 ) : (
                   <>
                     <h2 className="text-base font-bold">{r.contactInfo.name}</h2>
                     {contactLine && <p className="text-xs text-muted-foreground mt-1">{contactLine}</p>}
-                    {(r.contactInfo.linkedin || r.contactInfo.github) && (
+                    {(r.contactInfo.linkedinLabel || r.contactInfo.linkedin || r.contactInfo.githubLabel || r.contactInfo.github) && (
                       <p className="text-xs flex items-center justify-center gap-1.5 flex-wrap mt-0.5">
-                        {r.contactInfo.linkedin && (
-                          <a href={toHref(r.contactInfo.linkedin)} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">
-                            {r.contactInfo.linkedinLabel || 'LinkedIn'}
-                          </a>
+                        {(r.contactInfo.linkedinLabel || r.contactInfo.linkedin) && (
+                          r.contactInfo.linkedin
+                            ? <a href={toHref(r.contactInfo.linkedin)} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">{r.contactInfo.linkedinLabel || 'LinkedIn'}</a>
+                            : <span className="text-muted-foreground">{r.contactInfo.linkedinLabel || 'LinkedIn'}</span>
                         )}
-                        {r.contactInfo.linkedin && r.contactInfo.github && <span className="text-muted-foreground/40">|</span>}
-                        {r.contactInfo.github && (
-                          <a href={toHref(r.contactInfo.github)} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">
-                            {r.contactInfo.githubLabel || 'GitHub'}
-                          </a>
+                        {(r.contactInfo.linkedinLabel || r.contactInfo.linkedin) && (r.contactInfo.githubLabel || r.contactInfo.github) && <span className="text-muted-foreground/40">|</span>}
+                        {(r.contactInfo.githubLabel || r.contactInfo.github) && (
+                          r.contactInfo.github
+                            ? <a href={toHref(r.contactInfo.github)} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">{r.contactInfo.githubLabel || 'GitHub'}</a>
+                            : <span className="text-muted-foreground">{r.contactInfo.githubLabel || 'GitHub'}</span>
                         )}
                       </p>
                     )}
