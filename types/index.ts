@@ -89,7 +89,9 @@ export interface ContactInfo {
   phone: string
   location: string
   linkedin: string
+  linkedinLabel?: string
   github: string
+  githubLabel?: string
 }
 
 export interface SkillCategory {

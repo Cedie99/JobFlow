@@ -16,22 +16,8 @@ interface ResultsPanelProps {
   onResultChange: (r: OptimizeResponse) => void
 }
 
-function isUrl(s: string) {
-  return /^https?:\/\//i.test(s) || /^(www\.|linkedin\.com|github\.com)/i.test(s)
-}
 function toHref(s: string) {
   return /^https?:\/\//i.test(s) ? s : `https://${s}`
-}
-function ContactLink({ value, fallbackLabel }: { value: string; fallbackLabel: string }) {
-  if (!value) return null
-  if (isUrl(value)) {
-    return (
-      <a href={toHref(value)} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">
-        {fallbackLabel}
-      </a>
-    )
-  }
-  return <span>{value}</span>
 }
 
 function CopyButton({ text }: { text: string }) {
@@ -53,7 +39,9 @@ function CopyButton({ text }: { text: string }) {
 function buildResumeText(d: OptimizeResponse): string {
   const r = d.optimizedResume
   const contactLine = [r.contactInfo.email, r.contactInfo.phone, r.contactInfo.location].filter(Boolean).join(' | ')
-  const linksLine = [r.contactInfo.linkedin, r.contactInfo.github].filter(Boolean).join(' | ')
+  const linkedinText = r.contactInfo.linkedin ? `${r.contactInfo.linkedinLabel || 'LinkedIn'}: ${r.contactInfo.linkedin}` : ''
+  const githubText = r.contactInfo.github ? `${r.contactInfo.githubLabel || 'GitHub'}: ${r.contactInfo.github}` : ''
+  const linksLine = [linkedinText, githubText].filter(Boolean).join(' | ')
   return [
     r.contactInfo.name, contactLine, linksLine, '',
     '=== PROFESSIONAL SUMMARY ===', r.summary, '',
@@ -71,8 +59,17 @@ function buildResumeText(d: OptimizeResponse): string {
 function buildPrintHTML(d: OptimizeResponse): string {
   const r = d.optimizedResume
   const contactLine = [r.contactInfo.email, r.contactInfo.phone, r.contactInfo.location].filter(Boolean).join(' | ')
-  const linksLine = [r.contactInfo.linkedin, r.contactInfo.github].filter(Boolean).join(' | ')
   const esc = (s: string) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+  const liParts: string[] = []
+  if (r.contactInfo.linkedin) {
+    const href = /^https?:\/\//i.test(r.contactInfo.linkedin) ? r.contactInfo.linkedin : `https://${r.contactInfo.linkedin}`
+    liParts.push(`<a href="${esc(href)}" style="color:#1a56db;text-decoration:none">${esc(r.contactInfo.linkedinLabel || 'LinkedIn')}</a>`)
+  }
+  if (r.contactInfo.github) {
+    const href = /^https?:\/\//i.test(r.contactInfo.github) ? r.contactInfo.github : `https://${r.contactInfo.github}`
+    liParts.push(`<a href="${esc(href)}" style="color:#1a56db;text-decoration:none">${esc(r.contactInfo.githubLabel || 'GitHub')}</a>`)
+  }
+  const linksLine = liParts.join(' | ')
   return `<!DOCTYPE html><html><head><meta charset="UTF-8"><title>${esc(r.contactInfo.name)} - Resume</title>
 <style>*{margin:0;padding:0;box-sizing:border-box}body{font-family:Arial,sans-serif;font-size:11pt;line-height:1.45;color:#111;padding:36px 48px;max-width:850px;margin:0 auto}
 h1{font-size:17pt;text-align:center;margin-bottom:3px}
@@ -87,7 +84,7 @@ p{margin-bottom:8px}
 @media print{body{padding:20px 30px}@page{margin:.8cm;size:A4}}</style></head><body>
 <h1>${esc(r.contactInfo.name)}</h1>
 ${contactLine ? `<p class="contact">${esc(contactLine)}</p>` : ''}
-${linksLine ? `<p class="contact">${esc(linksLine)}</p>` : ''}
+${linksLine ? `<p class="contact">${linksLine}</p>` : ''}
 <h2>Professional Summary</h2><p>${esc(r.summary)}</p>
 ${r.education?.length ? `<h2>Education</h2>${r.education.map(e => `<div class="row"><div><div class="bold">${esc(e.degree)}</div><div class="sub">${esc(e.institution)}${e.location ? ', ' + esc(e.location) : ''}${e.gpa ? ' · GPA: ' + esc(e.gpa) : ''}</div></div><div>${esc(e.year)}</div></div>`).join('')}` : ''}
 ${r.experience?.length ? `<h2>Work Experience</h2>${r.experience.map(e => `<div class="row"><div><div class="bold">${esc(e.title)}</div><div class="sub">${esc(e.company)}${e.location ? ' · ' + esc(e.location) : ''}</div></div><div style="font-size:9.5pt">${esc(e.duration)}</div></div><ul>${e.bullets.map(b => `<li>${esc(b)}</li>`).join('')}</ul>`).join('')}` : ''}
@@ -125,7 +122,6 @@ export default function ResultsPanel({ result, onResultChange }: ResultsPanelPro
 
   const r = draft.optimizedResume
   const contactLine = [r.contactInfo.email, r.contactInfo.phone, r.contactInfo.location].filter(Boolean).join(' | ')
-  const linksLine = [r.contactInfo.linkedin, r.contactInfo.github].filter(Boolean).join(' | ')
 
   // --- Updaters ---
   function upContact(field: keyof ContactInfo, val: string) {
@@ -312,18 +308,32 @@ export default function ResultsPanel({ result, onResultChange }: ResultsPanelPro
                     <Input placeholder="Email" value={r.contactInfo.email} onChange={e => upContact('email', e.target.value)} />
                     <Input placeholder="Phone" value={r.contactInfo.phone} onChange={e => upContact('phone', e.target.value)} />
                     <Input placeholder="Location" value={r.contactInfo.location} onChange={e => upContact('location', e.target.value)} />
-                    <Input placeholder="LinkedIn URL" value={r.contactInfo.linkedin} onChange={e => upContact('linkedin', e.target.value)} />
-                    <Input placeholder="GitHub URL" value={r.contactInfo.github} onChange={e => upContact('github', e.target.value)} />
+                    <div className="space-y-1">
+                      <Input placeholder="LinkedIn display text" value={r.contactInfo.linkedinLabel ?? 'LinkedIn'} onChange={e => upContact('linkedinLabel', e.target.value)} className="h-8 text-xs" />
+                      <Input placeholder="LinkedIn URL" value={r.contactInfo.linkedin} onChange={e => upContact('linkedin', e.target.value)} />
+                    </div>
+                    <div className="space-y-1">
+                      <Input placeholder="GitHub display text" value={r.contactInfo.githubLabel ?? 'GitHub'} onChange={e => upContact('githubLabel', e.target.value)} className="h-8 text-xs" />
+                      <Input placeholder="GitHub URL" value={r.contactInfo.github} onChange={e => upContact('github', e.target.value)} />
+                    </div>
                   </div>
                 ) : (
                   <>
                     <h2 className="text-base font-bold">{r.contactInfo.name}</h2>
                     {contactLine && <p className="text-xs text-muted-foreground mt-1">{contactLine}</p>}
                     {(r.contactInfo.linkedin || r.contactInfo.github) && (
-                      <p className="text-xs text-muted-foreground flex items-center justify-center gap-1.5 flex-wrap mt-0.5">
-                        {r.contactInfo.linkedin && <ContactLink value={r.contactInfo.linkedin} fallbackLabel="LinkedIn" />}
+                      <p className="text-xs flex items-center justify-center gap-1.5 flex-wrap mt-0.5">
+                        {r.contactInfo.linkedin && (
+                          <a href={toHref(r.contactInfo.linkedin)} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">
+                            {r.contactInfo.linkedinLabel || 'LinkedIn'}
+                          </a>
+                        )}
                         {r.contactInfo.linkedin && r.contactInfo.github && <span className="text-muted-foreground/40">|</span>}
-                        {r.contactInfo.github && <ContactLink value={r.contactInfo.github} fallbackLabel="GitHub" />}
+                        {r.contactInfo.github && (
+                          <a href={toHref(r.contactInfo.github)} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">
+                            {r.contactInfo.githubLabel || 'GitHub'}
+                          </a>
+                        )}
                       </p>
                     )}
                   </>
