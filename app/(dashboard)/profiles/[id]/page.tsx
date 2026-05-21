@@ -4,9 +4,10 @@ import { useState, useEffect, useRef } from 'react'
 import { useRouter, useParams } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
-import { Send, Loader2, CheckCircle, Sparkles, User, ArrowLeft, Wand2 } from 'lucide-react'
+import { Send, Loader2, CheckCircle, Sparkles, User, ArrowLeft, Wand2, Lock } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { toast } from 'sonner'
+import Link from 'next/link'
 import type { ChatMessage } from '@/types'
 
 export default function ProfileInterviewPage() {
@@ -20,6 +21,7 @@ export default function ProfileInterviewPage() {
   const [synthesizing, setSynthesizing] = useState(false)
   const [profileLoading, setProfileLoading] = useState(true)
   const [completed, setCompleted] = useState(false)
+  const [limitReached, setLimitReached] = useState(false)
   const bottomRef = useRef<HTMLDivElement>(null)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
   const startedRef = useRef(false)
@@ -125,7 +127,14 @@ export default function ProfileInterviewPage() {
         body: JSON.stringify({ messages, profileId: id }),
         signal: AbortSignal.timeout(60_000),
       })
-      if (!res.ok) throw new Error()
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}))
+        if (err.error === 'limit_reached') {
+          setLimitReached(true)
+          return
+        }
+        throw new Error()
+      }
       setCompleted(true)
       toast.success('Profile saved!')
     } catch {
@@ -314,7 +323,28 @@ export default function ProfileInterviewPage() {
       {/* Input area */}
       <div className="shrink-0 border-t border-border bg-card">
         <div className="max-w-2xl mx-auto px-4 py-4 space-y-3">
-          {isComplete && (
+          {limitReached && (
+            <div className="rounded-xl border border-amber-200 bg-amber-50 p-4 space-y-3">
+              <div className="flex gap-3">
+                <div className="rounded-lg bg-amber-100 p-2 shrink-0">
+                  <Lock className="h-4 w-4 text-amber-600" />
+                </div>
+                <div>
+                  <p className="text-sm font-semibold text-amber-900">You've used all 3 free uses</p>
+                  <p className="text-xs text-amber-700 mt-0.5 leading-relaxed">
+                    Upgrade to Pro to save this profile and generate unlimited tailored resumes.
+                  </p>
+                </div>
+              </div>
+              <Link href="/pricing" className="block">
+                <Button size="sm" className="w-full gap-1.5 bg-amber-600 hover:bg-amber-700 text-white">
+                  <Sparkles className="h-3.5 w-3.5" />
+                  Upgrade to Pro — Unlimited Access
+                </Button>
+              </Link>
+            </div>
+          )}
+          {isComplete && !limitReached && (
             <Button
               onClick={handleComplete}
               disabled={synthesizing || loading}
