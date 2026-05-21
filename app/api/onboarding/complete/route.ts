@@ -3,6 +3,7 @@ export const runtime = 'nodejs'
 import { NextRequest, NextResponse } from 'next/server'
 import Anthropic from '@anthropic-ai/sdk'
 import { createClient } from '@/lib/supabase/server'
+import { getUsageStatus, incrementUsage } from '@/lib/subscription'
 import type { ChatMessage } from '@/types'
 
 const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY! })
@@ -96,6 +97,14 @@ export async function POST(request: NextRequest) {
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
+    const usage = await getUsageStatus(user.id)
+    if (!usage.allowed) {
+      return NextResponse.json(
+        { error: 'limit_reached', usesCount: usage.usesCount, limit: usage.limit },
+        { status: 402 },
+      )
+    }
+
     const { messages, profileId }: { messages: ChatMessage[], profileId: string } = await request.json()
 
     const conversation = messages
@@ -123,6 +132,10 @@ export async function POST(request: NextRequest) {
       .update({ interview_messages: messages, profile, completed: true })
       .eq('id', profileId)
       .eq('user_id', user.id)
+
+    if (!usage.isSubscribed) {
+      await incrementUsage(user.id).catch(() => {})
+    }
 
     return NextResponse.json({ success: true })
   } catch (err) {

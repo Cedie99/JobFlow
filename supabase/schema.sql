@@ -119,3 +119,51 @@ create policy "Users can delete own applications"
 create trigger update_job_applications_updated_at
   before update on job_applications
   for each row execute function update_updated_at_column();
+
+-- ── Subscription tables ─────────────────────────────────────────────────────
+
+-- Tracks how many free AI uses each user has consumed
+create table if not exists user_usage (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid references auth.users(id) on delete cascade not null unique,
+  ai_uses_count integer not null default 0,
+  created_at timestamptz default now(),
+  updated_at timestamptz default now()
+);
+
+alter table user_usage enable row level security;
+
+create policy "Users can view own usage"
+  on user_usage for select
+  using (auth.uid() = user_id);
+
+create trigger update_user_usage_updated_at
+  before update on user_usage
+  for each row execute function update_updated_at_column();
+
+-- LemonSqueezy subscription state (written by webhook via service role)
+create table if not exists user_subscriptions (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid references auth.users(id) on delete cascade not null unique,
+  ls_subscription_id text unique,
+  ls_customer_id text,
+  ls_order_id text,
+  ls_product_id text,
+  ls_variant_id text,
+  status text check (status in ('active', 'paused', 'cancelled', 'expired', 'past_due', 'unpaid', 'on_trial')),
+  renews_at timestamptz,
+  ends_at timestamptz,
+  trial_ends_at timestamptz,
+  created_at timestamptz default now(),
+  updated_at timestamptz default now()
+);
+
+alter table user_subscriptions enable row level security;
+
+create policy "Users can view own subscription"
+  on user_subscriptions for select
+  using (auth.uid() = user_id);
+
+create trigger update_user_subscriptions_updated_at
+  before update on user_subscriptions
+  for each row execute function update_updated_at_column();

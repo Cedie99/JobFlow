@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
@@ -16,9 +16,11 @@ import {
   PanelLeftOpen,
   Wand2,
   Layers,
+  Zap,
 } from 'lucide-react'
 import { toast } from 'sonner'
 import JobLogo from '@/components/job-logo'
+import type { UsageStatus } from '@/types'
 
 interface SidebarProps {
   userEmail: string
@@ -52,6 +54,14 @@ export default function Sidebar({ userEmail }: SidebarProps) {
   const router = useRouter()
   const supabase = createClient()
   const [collapsed, setCollapsed] = useState(false)
+  const [usage, setUsage] = useState<UsageStatus | null>(null)
+
+  useEffect(() => {
+    fetch('/api/usage')
+      .then(r => r.ok ? r.json() : null)
+      .then(data => setUsage(data))
+      .catch(() => {})
+  }, [pathname])
 
   async function handleSignOut() {
     await supabase.auth.signOut()
@@ -154,6 +164,46 @@ export default function Sidebar({ userEmail }: SidebarProps) {
           </div>
         ))}
       </nav>
+
+      {/* ── Upgrade / Usage ────────────────────────────────── */}
+      {usage && !usage.isSubscribed && !collapsed && (
+        <div className="mx-3 mb-2 rounded-lg border border-dashed border-primary/30 bg-primary/[0.04] p-3 space-y-2">
+          <div className="flex items-center justify-between text-xs">
+            <span className="text-muted-foreground font-medium">Free uses</span>
+            <span className={cn(
+              'font-semibold tabular-nums',
+              usage.usesCount >= usage.limit ? 'text-destructive' : 'text-foreground'
+            )}>
+              {usage.usesCount}/{usage.limit}
+            </span>
+          </div>
+          <div className="h-1.5 rounded-full bg-muted overflow-hidden">
+            <div
+              className={cn(
+                'h-full rounded-full transition-all',
+                usage.usesCount >= usage.limit ? 'bg-destructive' : 'bg-primary'
+              )}
+              style={{ width: `${Math.min((usage.usesCount / usage.limit) * 100, 100)}%` }}
+            />
+          </div>
+          <Link href="/pricing" className="block">
+            <div className="flex items-center gap-1.5 text-[11px] font-semibold text-primary hover:text-primary/80 transition-colors">
+              <Zap className="h-3 w-3" />
+              Upgrade to Pro — unlimited
+            </div>
+          </Link>
+        </div>
+      )}
+
+      {usage && !usage.isSubscribed && collapsed && (
+        <div className="flex justify-center mb-1">
+          <Link href="/pricing" title="Upgrade to Pro">
+            <div className="flex items-center justify-center h-9 w-9 rounded-md text-primary hover:bg-primary/10 transition-colors">
+              <Zap className="h-4 w-4" />
+            </div>
+          </Link>
+        </div>
+      )}
 
       {/* ── User ───────────────────────────────────────────── */}
       <div className={cn(

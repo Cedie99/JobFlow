@@ -3,6 +3,7 @@ export const runtime = 'nodejs'
 import { NextRequest, NextResponse } from 'next/server'
 import Anthropic from '@anthropic-ai/sdk'
 import { createClient } from '@/lib/supabase/server'
+import { getUsageStatus, incrementUsage } from '@/lib/subscription'
 import type { OptimizeResponse } from '@/types'
 
 const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY! })
@@ -129,6 +130,18 @@ const RESPONSE_SCHEMA = {
 
 export async function POST(request: NextRequest) {
   try {
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+
+    const usage = await getUsageStatus(user.id)
+    if (!usage.allowed) {
+      return NextResponse.json(
+        { error: 'limit_reached', usesCount: usage.usesCount, limit: usage.limit },
+        { status: 402 },
+      )
+    }
+
     const { resumeText, jobDescription } = await request.json()
 
     if (!resumeText || !jobDescription) {
@@ -186,21 +199,18 @@ OUTPUT ALSO INCLUDES:
 
     const result = JSON.parse(textBlock.text) as OptimizeResponse
 
-    // Auto-save to DB (best-effort — don't fail the request if save fails)
     let savedId: string | null = null
     try {
-      const supabase = await createClient()
-      const { data: { user } } = await supabase.auth.getUser()
-      if (user) {
-        const { data } = await supabase
-          .from('resume_optimizations')
-          .insert({ user_id: user.id, label: deriveLabel(jobDescription), job_description: jobDescription, result })
-          .select('id')
-          .single()
-        savedId = data?.id ?? null
-      }
-    } catch {
-      // non-fatal
+      const { data } = await supabase
+        .from('resume_optimizations')
+        .insert({ user_id: user.id, label: deriveLabel(jobDescription), job_description: jobDescription, result })
+        .select('id')
+        .single()
+      savedId = data?.id ?? null
+    } catch { /* non-fatal */ }
+
+    if (!usage.isSubscribed) {
+      await incrementUsage(user.id).catch(() => {})
     }
 
     return NextResponse.json({ ...result, savedId })

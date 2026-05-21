@@ -138,3 +138,32 @@ export interface SavedOptimization {
   created_at: string
   result?: OptimizeResponse
 }
+
+export type SubscriptionStatus =
+  | 'active'
+  | 'on_trial'
+  | 'paused'
+  | 'cancelled'
+  | 'expired'
+  | 'past_due'
+  | 'unpaid'
+
+export interface UserSubscription {
+  id: string
+  user_id: string
+  ls_subscription_id: string | null
+  ls_customer_id: string | null
+  status: SubscriptionStatus
+  renews_at: string | null
+  ends_at: string | null
+  trial_ends_at: string | null
+  created_at: string
+  updated_at: string
+}
+
+export interface UsageStatus {
+  allowed: boolean
+  isSubscribed: boolean
+  usesCount: number
+  limit: number
+}

@@ -3,6 +3,7 @@ export const runtime = 'nodejs'
 import { NextRequest, NextResponse } from 'next/server'
 import Anthropic from '@anthropic-ai/sdk'
 import { createClient } from '@/lib/supabase/server'
+import { getUsageStatus, incrementUsage } from '@/lib/subscription'
 import type { OptimizeResponse, ProfileData } from '@/types'
 
 const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY! })
@@ -151,6 +152,14 @@ export async function POST(request: NextRequest) {
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
+    const usage = await getUsageStatus(user.id)
+    if (!usage.allowed) {
+      return NextResponse.json(
+        { error: 'limit_reached', usesCount: usage.usesCount, limit: usage.limit },
+        { status: 402 },
+      )
+    }
+
     const { jobDescription, profileId } = await request.json()
     if (!jobDescription) return NextResponse.json({ error: 'jobDescription is required' }, { status: 400 })
     if (!profileId) return NextResponse.json({ error: 'profileId is required' }, { status: 400 })
@@ -202,6 +211,10 @@ Also include:
         .single()
       savedId = data?.id ?? null
     } catch { /* non-fatal */ }
+
+    if (!usage.isSubscribed) {
+      await incrementUsage(user.id).catch(() => {})
+    }
 
     return NextResponse.json({ ...result, savedId })
   } catch (err) {
