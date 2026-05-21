@@ -1,6 +1,6 @@
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
-import { createClient } from '@/lib/supabase/server'
+import { createClient, getUser } from '@/lib/supabase/server'
 import StatsCards from '@/components/stats-cards'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -29,19 +29,24 @@ const PIPELINE_STAGES = [
 ] as const
 
 export default async function DashboardPage() {
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
+  const [user, supabase] = await Promise.all([getUser(), createClient()])
   if (!user) redirect('/login')
 
-  const { data: recentApps } = await supabase
-    .from('job_applications')
-    .select('*')
-    .order('created_at', { ascending: false })
-    .limit(5)
+  const DASHBOARD_COLS = 'id, company_name, job_title, status, next_follow_up, applied_date, job_posting_url'
 
-  const { data: allApps } = await supabase
-    .from('job_applications')
-    .select('*')
+  const [{ data: recentAppsRaw }, { data: allAppsRaw }] = await Promise.all([
+    supabase
+      .from('job_applications')
+      .select(DASHBOARD_COLS)
+      .order('created_at', { ascending: false })
+      .limit(5),
+    supabase
+      .from('job_applications')
+      .select(DASHBOARD_COLS),
+  ])
+
+  const recentApps = recentAppsRaw as JobApplication[] | null
+  const allApps = allAppsRaw as JobApplication[] | null
 
   const today = startOfDay(new Date())
   const inThreeDays = addDays(today, 3)
