@@ -6,9 +6,10 @@ import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
 import { Label } from '@/components/ui/label'
 import { Progress } from '@/components/ui/progress'
-import { UploadCloud, FileText, X, Loader2 } from 'lucide-react'
+import { UploadCloud, FileText, X, Loader2, Lock, Sparkles } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { toast } from 'sonner'
+import Link from 'next/link'
 import type { OptimizeResponse } from '@/types'
 
 interface ResumeFormProps {
@@ -22,6 +23,7 @@ export default function ResumeForm({ onResult, onLoading, loading }: ResumeFormP
   const [resumeText, setResumeText] = useState('')
   const [jobDescription, setJobDescription] = useState('')
   const [progress, setProgress] = useState(0)
+  const [limitReached, setLimitReached] = useState(false)
 
   const onDrop = useCallback((accepted: File[]) => {
     if (accepted[0]) {
@@ -90,6 +92,10 @@ export default function ResumeForm({ onResult, onLoading, loading }: ResumeFormP
 
       if (!res.ok) {
         const err = await res.json()
+        if (err.error === 'limit_reached') {
+          setLimitReached(true)
+          return
+        }
         throw new Error(err.error ?? 'Optimization failed')
       }
 
@@ -185,7 +191,29 @@ export default function ResumeForm({ onResult, onLoading, loading }: ResumeFormP
         </div>
       )}
 
-      <Button type="submit" className="w-full" disabled={loading} size="lg">
+      {limitReached && (
+        <div className="rounded-xl border border-amber-200 bg-amber-50 p-4 space-y-3">
+          <div className="flex gap-3">
+            <div className="rounded-lg bg-amber-100 p-2 shrink-0">
+              <Lock className="h-4 w-4 text-amber-600" />
+            </div>
+            <div>
+              <p className="text-sm font-semibold text-amber-900">You've used all 3 free optimizations</p>
+              <p className="text-xs text-amber-700 mt-0.5 leading-relaxed">
+                Upgrade to Pro for unlimited AI resume optimizations, cover letters, and application emails.
+              </p>
+            </div>
+          </div>
+          <Link href="/pricing" className="block">
+            <Button size="sm" className="w-full gap-1.5 bg-amber-600 hover:bg-amber-700 text-white">
+              <Sparkles className="h-3.5 w-3.5" />
+              Upgrade to Pro — Unlimited Access
+            </Button>
+          </Link>
+        </div>
+      )}
+
+      <Button type="submit" className="w-full" disabled={loading || limitReached} size="lg">
         {loading ? (
           <>
             <Loader2 className="h-4 w-4 mr-2 animate-spin" />
