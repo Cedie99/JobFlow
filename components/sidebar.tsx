@@ -17,14 +17,17 @@ import {
   Wand2,
   Layers,
   Zap,
+  Shield,
 } from 'lucide-react'
 import { toast } from 'sonner'
 import JobLogo from '@/components/job-logo'
 import { Badge } from '@/components/ui/badge'
+import FeedbackDialog from '@/components/feedback-dialog'
 import type { UsageStatus } from '@/types'
 
 interface SidebarProps {
   userEmail: string
+  isAdmin?: boolean
 }
 
 const navGroups = [
@@ -50,7 +53,7 @@ const navGroups = [
   },
 ]
 
-export default function Sidebar({ userEmail }: SidebarProps) {
+export default function Sidebar({ userEmail, isAdmin }: SidebarProps) {
   const pathname = usePathname()
   const router = useRouter()
   const supabase = createClient()
@@ -166,6 +169,35 @@ export default function Sidebar({ userEmail }: SidebarProps) {
         ))}
       </nav>
 
+      {/* ── Admin ──────────────────────────────────────────── */}
+      {isAdmin && (
+        <div className={cn('px-3 mb-1', collapsed && 'px-2')}>
+          {!collapsed && (
+            <p className="text-[9px] font-semibold uppercase tracking-widest text-muted-foreground/40 px-3 mb-1.5 select-none">
+              Admin
+            </p>
+          )}
+          {collapsed && <div className="h-px bg-sidebar-border mx-1 mb-2 mt-1" />}
+          <Link href="/admin" title={collapsed ? 'Admin Panel' : undefined}>
+            <div className={cn(
+              'group relative flex items-center gap-2.5 rounded-lg text-sm font-medium transition-all duration-150',
+              collapsed ? 'justify-center p-2.5' : 'px-3 py-2',
+              pathname.startsWith('/admin')
+                ? 'bg-amber-500/10 text-amber-600 dark:text-amber-400 font-semibold ring-1 ring-amber-500/20'
+                : 'text-muted-foreground hover:bg-sidebar-accent hover:text-foreground hover:translate-x-0.5'
+            )}>
+              <span className={cn(
+                'inline-flex items-center justify-center w-7 h-7 rounded-md shrink-0',
+                pathname.startsWith('/admin') ? 'bg-amber-500/15' : 'group-hover:bg-amber-500/10'
+              )}>
+                <Shield className="h-4 w-4 shrink-0" />
+              </span>
+              {!collapsed && 'Admin Panel'}
+            </div>
+          </Link>
+        </div>
+      )}
+
       {/* ── Upgrade / Usage ────────────────────────────────── */}
       {usage && !usage.isSubscribed && !collapsed && (
         <div className="mx-3 mb-2 rounded-lg border border-dashed border-primary/30 bg-primary/[0.04] p-3 space-y-2">
@@ -250,6 +282,7 @@ export default function Sidebar({ userEmail }: SidebarProps) {
                 </Avatar>
               </div>
             )}
+            <FeedbackDialog collapsed />
             <button
               onClick={handleSignOut}
               title="Sign out"
@@ -259,15 +292,18 @@ export default function Sidebar({ userEmail }: SidebarProps) {
             </button>
           </>
         ) : (
-          <Button
-            variant="ghost"
-            size="sm"
-            className="w-full justify-start text-muted-foreground hover:text-destructive hover:bg-red-50 group"
-            onClick={handleSignOut}
-          >
-            <LogOut className="h-4 w-4 mr-2 transition-transform duration-150 group-hover:scale-110" />
-            Sign out
-          </Button>
+          <>
+            <FeedbackDialog />
+            <Button
+              variant="ghost"
+              size="sm"
+              className="w-full justify-start text-muted-foreground hover:text-destructive hover:bg-red-50 group"
+              onClick={handleSignOut}
+            >
+              <LogOut className="h-4 w-4 mr-2 transition-transform duration-150 group-hover:scale-110" />
+              Sign out
+            </Button>
+          </>
         )}
       </div>
     </aside>

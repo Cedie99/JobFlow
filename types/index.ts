@@ -169,3 +169,27 @@ export interface UsageStatus {
   usesCount: number
   limit: number
 }
+
+export type FeedbackType = 'bug' | 'feature' | 'general'
+export type FeedbackStatus = 'open' | 'reviewed' | 'closed'
+export type AnnouncementType = 'info' | 'warning' | 'success' | 'update'
+
+export interface UserFeedback {
+  id: string
+  user_id: string | null
+  user_email: string | null
+  type: FeedbackType
+  message: string
+  status: FeedbackStatus
+  created_at: string
+}
+
+export interface Announcement {
+  id: string
+  title: string
+  body: string
+  type: AnnouncementType
+  active: boolean
+  created_at: string
+  updated_at: string
+}

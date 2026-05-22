@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { Check, Zap } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -26,6 +26,16 @@ const PRO_FEATURES = [
 export default function PricingPage() {
   const router = useRouter()
   const [loading, setLoading] = useState(false)
+  const [isSubscribed, setIsSubscribed] = useState(false)
+  const [statusLoading, setStatusLoading] = useState(true)
+
+  useEffect(() => {
+    fetch('/api/usage')
+      .then(r => r.json())
+      .then(data => setIsSubscribed(data.isSubscribed ?? false))
+      .catch(() => {})
+      .finally(() => setStatusLoading(false))
+  }, [])
 
   async function handleUpgrade() {
     setLoading(true)
@@ -68,20 +78,29 @@ export default function PricingPage() {
           </ul>
 
           <Button variant="outline" className="w-full" onClick={() => router.push('/dashboard')}>
-            Continue with Free
+            {!isSubscribed && !statusLoading ? 'Current Plan' : 'Continue with Free'}
           </Button>
         </div>
 
         {/* Pro */}
         <div className={cn(
-          'rounded-xl border-2 border-primary bg-card p-6 flex flex-col relative overflow-hidden',
+          'rounded-xl border-2 bg-card p-6 flex flex-col relative overflow-hidden',
+          isSubscribed ? 'border-green-500' : 'border-primary',
         )}>
-          <div className="absolute top-0 right-0 bg-primary text-primary-foreground text-[10px] font-bold px-3 py-1 rounded-bl-lg tracking-wide uppercase">
-            Most Popular
+          <div className={cn(
+            'absolute top-0 right-0 text-[10px] font-bold px-3 py-1 rounded-bl-lg tracking-wide uppercase',
+            isSubscribed
+              ? 'bg-green-500 text-white'
+              : 'bg-primary text-primary-foreground',
+          )}>
+            {isSubscribed ? 'Current Plan' : 'Most Popular'}
           </div>
 
           <div className="mb-4">
-            <p className="text-sm font-medium text-primary uppercase tracking-wide">Pro</p>
+            <p className={cn(
+              'text-sm font-medium uppercase tracking-wide',
+              isSubscribed ? 'text-green-600 dark:text-green-400' : 'text-primary',
+            )}>Pro</p>
             <p className="mt-1 text-4xl font-bold">
               ₱119
               <span className="text-base font-normal text-muted-foreground ml-1">/month</span>
@@ -92,20 +111,33 @@ export default function PricingPage() {
           <ul className="space-y-3 mb-8 flex-1">
             {PRO_FEATURES.map(f => (
               <li key={f} className="flex items-start gap-2.5 text-sm">
-                <Check className="h-4 w-4 text-primary mt-0.5 shrink-0" />
+                <Check className={cn(
+                  'h-4 w-4 mt-0.5 shrink-0',
+                  isSubscribed ? 'text-green-500' : 'text-primary',
+                )} />
                 <span>{f}</span>
               </li>
             ))}
           </ul>
 
-          <Button
-            className="w-full gap-2"
-            onClick={handleUpgrade}
-            disabled={loading}
-          >
-            <Zap className="h-4 w-4" />
-            {loading ? 'Redirecting...' : 'Upgrade to Pro'}
-          </Button>
+          {isSubscribed ? (
+            <Button
+              className="w-full gap-2 bg-green-500 hover:bg-green-600 text-white"
+              disabled
+            >
+              <Check className="h-4 w-4" />
+              You&apos;re on Pro
+            </Button>
+          ) : (
+            <Button
+              className="w-full gap-2"
+              onClick={handleUpgrade}
+              disabled={loading || statusLoading}
+            >
+              <Zap className="h-4 w-4" />
+              {loading ? 'Redirecting...' : 'Upgrade to Pro'}
+            </Button>
+          )}
         </div>
       </div>
 

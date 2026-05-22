@@ -167,3 +167,62 @@ create policy "Users can view own subscription"
 create trigger update_user_subscriptions_updated_at
   before update on user_subscriptions
   for each row execute function update_updated_at_column();
+
+-- ── Admin: User Feedback ─────────────────────────────────────────────────────
+
+create table if not exists user_feedback (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid references auth.users(id) on delete set null,
+  user_email text,
+  type text not null check (type in ('bug', 'feature', 'general')),
+  message text not null,
+  status text not null default 'open' check (status in ('open', 'reviewed', 'closed')),
+  created_at timestamptz default now()
+);
+
+alter table user_feedback enable row level security;
+
+create policy "Users can insert own feedback"
+  on user_feedback for insert to authenticated
+  with check (auth.uid() = user_id);
+
+create policy "Users can view own feedback"
+  on user_feedback for select
+  using (auth.uid() = user_id);
+
+-- ── Admin: Announcements ─────────────────────────────────────────────────────
+
+create table if not exists announcements (
+  id uuid primary key default gen_random_uuid(),
+  title text not null,
+  body text not null,
+  type text not null default 'info' check (type in ('info', 'warning', 'success', 'update')),
+  active boolean not null default true,
+  created_at timestamptz default now(),
+  updated_at timestamptz default now()
+);
+
+alter table announcements enable row level security;
+
+create policy "Anyone can view active announcements"
+  on announcements for select
+  using (active = true);
+
+create trigger update_announcements_updated_at
+  before update on announcements
+  for each row execute function update_updated_at_column();
+
+-- Tracks which users have dismissed which announcements
+create table if not exists dismissed_announcements (
+  user_id uuid references auth.users(id) on delete cascade,
+  announcement_id uuid references announcements(id) on delete cascade,
+  dismissed_at timestamptz default now(),
+  primary key (user_id, announcement_id)
+);
+
+alter table dismissed_announcements enable row level security;
+
+create policy "Users can manage own dismissals"
+  on dismissed_announcements for all
+  using (auth.uid() = user_id)
+  with check (auth.uid() = user_id);
