@@ -20,6 +20,7 @@ import {
 } from 'lucide-react'
 import { toast } from 'sonner'
 import JobLogo from '@/components/job-logo'
+import { Badge } from '@/components/ui/badge'
 import type { UsageStatus } from '@/types'
 
 interface SidebarProps {
@@ -212,15 +213,25 @@ export default function Sidebar({ userEmail }: SidebarProps) {
       )}>
         {!collapsed && (
           <div className="flex items-center gap-3 mb-2 px-1">
-            <Avatar className="h-7 w-7 shrink-0 ring-2 ring-primary/20">
+            <Avatar className={cn(
+              'h-7 w-7 shrink-0 ring-2',
+              usage?.isSubscribed ? 'ring-amber-400/60' : 'ring-primary/20'
+            )}>
               <AvatarFallback className="text-[10px] bg-primary text-primary-foreground font-semibold">
                 {initials}
               </AvatarFallback>
             </Avatar>
             <div className="min-w-0">
-              <p className="text-xs font-medium text-foreground/80 truncate max-w-[130px]">
-                {userEmail.split('@')[0]}
-              </p>
+              <div className="flex items-center gap-1.5">
+                <p className="text-xs font-medium text-foreground/80 truncate max-w-[100px]">
+                  {userEmail.split('@')[0]}
+                </p>
+                {usage?.isSubscribed && (
+                  <Badge className="h-4 px-1.5 text-[9px] font-bold tracking-wide bg-amber-400/15 text-amber-600 border-amber-400/30 dark:text-amber-400">
+                    PRO
+                  </Badge>
+                )}
+              </div>
               <p className="text-[10px] text-muted-foreground truncate max-w-[130px]">
                 {userEmail}
               </p>
@@ -229,13 +240,24 @@ export default function Sidebar({ userEmail }: SidebarProps) {
         )}
 
         {collapsed ? (
-          <button
-            onClick={handleSignOut}
-            title="Sign out"
-            className="group flex items-center justify-center h-9 w-9 rounded-md text-muted-foreground hover:text-destructive hover:bg-red-50 transition-colors"
-          >
-            <LogOut className="h-4 w-4 transition-transform duration-150 group-hover:scale-110" />
-          </button>
+          <>
+            {usage?.isSubscribed && (
+              <div className="flex justify-center mb-1">
+                <Avatar className="h-7 w-7 ring-2 ring-amber-400/60">
+                  <AvatarFallback className="text-[10px] bg-primary text-primary-foreground font-semibold">
+                    {initials}
+                  </AvatarFallback>
+                </Avatar>
+              </div>
+            )}
+            <button
+              onClick={handleSignOut}
+              title="Sign out"
+              className="group flex items-center justify-center h-9 w-9 rounded-md text-muted-foreground hover:text-destructive hover:bg-red-50 transition-colors"
+            >
+              <LogOut className="h-4 w-4 transition-transform duration-150 group-hover:scale-110" />
+            </button>
+          </>
         ) : (
           <Button
             variant="ghost"
