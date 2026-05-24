@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { Check, Zap, ExternalLink } from 'lucide-react'
+import { Check, Zap } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
 import { toast } from 'sonner'
@@ -36,7 +36,6 @@ function useIsUSUser() {
 export default function PricingPage() {
   const router = useRouter()
   const [loading, setLoading] = useState(false)
-  const [portalLoading, setPortalLoading] = useState(false)
   const [isSubscribed, setIsSubscribed] = useState(false)
   const [statusLoading, setStatusLoading] = useState(true)
   const isUSUser = useIsUSUser()
@@ -48,20 +47,6 @@ export default function PricingPage() {
       .catch(() => {})
       .finally(() => setStatusLoading(false))
   }, [])
-
-  async function handleManageBilling() {
-    setPortalLoading(true)
-    try {
-      const res = await fetch('/api/billing-portal')
-      if (!res.ok) throw new Error('Portal not found')
-      const { url } = await res.json()
-      window.open(url, '_blank')
-    } catch {
-      toast.error('Could not open billing portal. Please try again.')
-    } finally {
-      setPortalLoading(false)
-    }
-  }
 
   async function handleUpgrade() {
     setLoading(true)
@@ -159,24 +144,13 @@ export default function PricingPage() {
           </ul>
 
           {isSubscribed ? (
-            <div className="flex flex-col gap-2">
-              <Button
-                className="w-full gap-2 bg-green-500 hover:bg-green-600 text-white"
-                disabled
-              >
-                <Check className="h-4 w-4" />
-                You&apos;re on Pro
-              </Button>
-              <Button
-                variant="outline"
-                className="w-full gap-2 text-muted-foreground"
-                onClick={handleManageBilling}
-                disabled={portalLoading}
-              >
-                <ExternalLink className="h-4 w-4" />
-                {portalLoading ? 'Opening...' : 'Manage Subscription'}
-              </Button>
-            </div>
+            <Button
+              className="w-full gap-2 bg-green-500 hover:bg-green-600 text-white"
+              disabled
+            >
+              <Check className="h-4 w-4" />
+              You&apos;re on Pro
+            </Button>
           ) : (
             <Button
               className="w-full gap-2"

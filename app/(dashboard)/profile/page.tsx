@@ -16,7 +16,6 @@ import {
   CheckCircle2,
   CreditCard,
 } from 'lucide-react'
-import BillingButton from './_components/billing-button'
 
 export default async function ProfilePage() {
   const user = await getUser()
@@ -143,9 +142,7 @@ export default async function ProfilePage() {
             </div>
 
             <div className="flex flex-col gap-2">
-              {isSubscribed ? (
-                <BillingButton />
-              ) : (
+              {!isSubscribed && (
                 <Link href="/pricing">
                   <Button size="sm" className="gap-2">
                     <Zap className="h-3.5 w-3.5" />
