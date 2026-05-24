@@ -4,13 +4,15 @@ import { useState, useEffect, Suspense } from 'react'
 import { useSearchParams, useRouter } from 'next/navigation'
 import { cn } from '@/lib/utils'
 import ResultsPanel from '@/components/results-panel'
+import OptimizationHistory from '@/components/optimization-history'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Dialog, DialogContent } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
 import { Progress } from '@/components/ui/progress'
 import {
   Wand2, Loader2, Briefcase, Code, Target, Layers,
-  ChevronDown, CheckCircle, Clock, Plus, ArrowRight, Lock, Sparkles,
+  ChevronDown, CheckCircle, Clock, Plus, ArrowRight, Lock, Sparkles, X, FileText,
 } from 'lucide-react'
 import { toast } from 'sonner'
 import Link from 'next/link'
@@ -44,6 +46,8 @@ function BuildPageInner() {
   const [profilesLoading, setProfilesLoading] = useState(true)
   const [selectedId, setSelectedId] = useState<string>(preselectedId ?? '')
   const [selectorOpen, setSelectorOpen] = useState(false)
+  const [historyRevision, setHistoryRevision] = useState(0)
+  const [modal, setModal] = useState<{ result: OptimizeResponse; label: string } | null>(null)
 
   useEffect(() => {
     fetch('/api/career-profiles')
@@ -93,6 +97,7 @@ function BuildPageInner() {
       const data: OptimizeResponse = await res.json()
       setProgress(100)
       setResult(data)
+      setHistoryRevision(v => v + 1)
       toast.success('Resume generated!')
     } catch (err) {
       toast.error(err instanceof Error ? err.message : 'Something went wrong')
@@ -104,7 +109,13 @@ function BuildPageInner() {
 
   const p = selectedProfile?.profile
 
+  function handleLoadFromHistory(r: OptimizeResponse, label: string) {
+    setModal({ result: r, label })
+  }
+
   return (
+    <div className="flex h-full overflow-hidden">
+    <div className="flex-1 overflow-y-auto">
     <div className="p-6 flex flex-col min-h-full">
       <div className="mb-6 shrink-0">
         <div className="flex items-center gap-2 mb-1">
@@ -379,6 +390,45 @@ function BuildPageInner() {
           </Card>
         )}
       </div>
+    </div>
+    </div>
+
+    {/* ── History sidebar ───────────────────────────────── */}
+    <OptimizationHistory
+      onLoad={handleLoadFromHistory}
+      activeId={result?.savedId ?? null}
+      refreshTrigger={historyRevision}
+    />
+
+    {/* ── History load modal ────────────────────────────── */}
+    <Dialog open={!!modal} onOpenChange={(open) => { if (!open) setModal(null) }}>
+      <DialogContent showCloseButton={false} className="sm:max-w-3xl w-full h-[90vh] flex flex-col gap-0 p-0 overflow-hidden">
+        <div className="flex items-center gap-3 px-5 py-4 border-b border-border shrink-0">
+          <div className="rounded-lg bg-primary/10 p-1.5">
+            <FileText className="h-4 w-4 text-primary" />
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-semibold truncate">{modal?.label || 'Optimization'}</p>
+            <p className="text-xs text-muted-foreground">Viewing saved optimization</p>
+          </div>
+          <button
+            onClick={() => setModal(null)}
+            className="flex items-center justify-center h-7 w-7 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+          >
+            <X className="h-4 w-4" />
+          </button>
+        </div>
+        <div className="flex-1 min-h-0 p-5 overflow-hidden">
+          {modal && (
+            <ResultsPanel
+              result={modal.result}
+              onResultChange={(r) => setModal(m => m ? { ...m, result: r } : null)}
+            />
+          )}
+        </div>
+      </DialogContent>
+    </Dialog>
+
     </div>
   )
 }

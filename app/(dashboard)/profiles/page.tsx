@@ -7,7 +7,7 @@ import { Input } from '@/components/ui/input'
 import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog'
 import {
   Plus, Layers, CheckCircle, Clock, Trash2, Wand2,
-  ArrowRight, Loader2, MessageSquare, Sparkles,
+  ArrowRight, Loader2, MessageSquare, Sparkles, Eye,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { toast } from 'sonner'
@@ -268,13 +268,25 @@ export default function ProfilesPage() {
 
                 {/* Actions */}
                 <div className="flex items-center gap-2 mt-4 pt-3 border-t border-border/60">
-                  <button
-                    onClick={(e) => { e.stopPropagation(); router.push(`/profiles/${profile.id}`) }}
-                    className="flex-1 flex items-center justify-center gap-1.5 text-[11px] font-medium text-primary bg-primary/10 hover:bg-primary hover:text-primary-foreground rounded-lg py-1.5 transition-all"
-                  >
-                    <MessageSquare className="h-3 w-3" />
-                    {profile.completed ? 'View / Update' : 'Continue Interview'}
-                  </button>
+                  {!profile.completed && (
+                    <button
+                      onClick={(e) => { e.stopPropagation(); router.push(`/profiles/${profile.id}`) }}
+                      className="flex-1 flex items-center justify-center gap-1.5 text-[11px] font-medium text-primary bg-primary/10 hover:bg-primary hover:text-primary-foreground rounded-lg py-1.5 transition-all"
+                    >
+                      <MessageSquare className="h-3 w-3" />
+                      Continue Interview
+                    </button>
+                  )}
+
+                  {profile.completed && (
+                    <button
+                      onClick={(e) => { e.stopPropagation(); router.push(`/profiles/${profile.id}/details`) }}
+                      className="flex-1 flex items-center justify-center gap-1.5 text-[11px] font-medium text-blue-700 bg-blue-50 hover:bg-blue-600 hover:text-white px-2.5 py-1.5 rounded-lg transition-all border border-blue-200 hover:border-blue-600"
+                    >
+                      <Eye className="h-3 w-3" />
+                      View Details
+                    </button>
+                  )}
 
                   {profile.completed && (
                     <button
