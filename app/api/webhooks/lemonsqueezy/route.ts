@@ -9,6 +9,7 @@ const SUBSCRIPTION_EVENTS = [
   'subscription_resumed',
   'subscription_paused',
   'subscription_unpaused',
+  'subscription_payment_failed',
 ]
 
 async function verifySignature(rawBody: string, signature: string): Promise<boolean> {
@@ -61,7 +62,6 @@ export async function POST(request: NextRequest) {
         renews_at: attrs.renews_at ?? null,
         ends_at: attrs.ends_at ?? null,
         trial_ends_at: attrs.trial_ends_at ?? null,
-        customer_portal_url: attrs.urls?.customer_portal ?? null,
       },
       { onConflict: 'user_id' },
     )

@@ -9,9 +9,6 @@ function lsHeaders() {
 }
 
 export async function createCheckoutUrl(userEmail: string, userId: string): Promise<string> {
-  console.log('[LS Debug] Store ID:', process.env.LEMONSQUEEZY_STORE_ID)
-  console.log('[LS Debug] Variant ID:', process.env.LEMONSQUEEZY_VARIANT_ID)
-  console.log('[LS Debug] API Key starts with:', process.env.LEMONSQUEEZY_API_KEY?.slice(0, 10))
   const res = await fetch(`${LS_API}/checkouts`, {
     method: 'POST',
     headers: lsHeaders(),
