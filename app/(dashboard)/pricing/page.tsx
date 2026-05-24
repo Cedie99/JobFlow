@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { Check, Zap } from 'lucide-react'
+import { Check, Zap, ExternalLink } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
 import { toast } from 'sonner'
@@ -23,11 +23,23 @@ const PRO_FEATURES = [
   'Priority AI processing',
 ]
 
+function useIsUSUser() {
+  const [isUS, setIsUS] = useState(false)
+  useEffect(() => {
+    const lang = navigator.language || ''
+    const tz = Intl.DateTimeFormat().resolvedOptions().timeZone || ''
+    setIsUS(lang === 'en-US' && tz.startsWith('America/'))
+  }, [])
+  return isUS
+}
+
 export default function PricingPage() {
   const router = useRouter()
   const [loading, setLoading] = useState(false)
+  const [portalLoading, setPortalLoading] = useState(false)
   const [isSubscribed, setIsSubscribed] = useState(false)
   const [statusLoading, setStatusLoading] = useState(true)
+  const isUSUser = useIsUSUser()
 
   useEffect(() => {
     fetch('/api/usage')
@@ -36,6 +48,20 @@ export default function PricingPage() {
       .catch(() => {})
       .finally(() => setStatusLoading(false))
   }, [])
+
+  async function handleManageBilling() {
+    setPortalLoading(true)
+    try {
+      const res = await fetch('/api/billing-portal')
+      if (!res.ok) throw new Error('Portal not found')
+      const { url } = await res.json()
+      window.open(url, '_blank')
+    } catch {
+      toast.error('Could not open billing portal. Please try again.')
+    } finally {
+      setPortalLoading(false)
+    }
+  }
 
   async function handleUpgrade() {
     setLoading(true)
@@ -101,11 +127,23 @@ export default function PricingPage() {
               'text-sm font-medium uppercase tracking-wide',
               isSubscribed ? 'text-green-600 dark:text-green-400' : 'text-primary',
             )}>Pro</p>
-            <p className="mt-1 text-4xl font-bold">
-              ₱119
-              <span className="text-base font-normal text-muted-foreground ml-1">/month</span>
-            </p>
-            <p className="mt-1 text-sm text-muted-foreground">≈ $2.09 USD · Cancel anytime</p>
+            {isUSUser ? (
+              <>
+                <p className="mt-1 text-4xl font-bold">
+                  $5.25
+                  <span className="text-base font-normal text-muted-foreground ml-1">/month</span>
+                </p>
+                <p className="mt-1 text-sm text-muted-foreground">₱299 · Cancel anytime</p>
+              </>
+            ) : (
+              <>
+                <p className="mt-1 text-4xl font-bold">
+                  ₱299
+                  <span className="text-base font-normal text-muted-foreground ml-1">/month</span>
+                </p>
+                <p className="mt-1 text-sm text-muted-foreground">≈ $5.25 USD · Cancel anytime</p>
+              </>
+            )}
           </div>
 
           <ul className="space-y-3 mb-8 flex-1">
@@ -121,13 +159,24 @@ export default function PricingPage() {
           </ul>
 
           {isSubscribed ? (
-            <Button
-              className="w-full gap-2 bg-green-500 hover:bg-green-600 text-white"
-              disabled
-            >
-              <Check className="h-4 w-4" />
-              You&apos;re on Pro
-            </Button>
+            <div className="flex flex-col gap-2">
+              <Button
+                className="w-full gap-2 bg-green-500 hover:bg-green-600 text-white"
+                disabled
+              >
+                <Check className="h-4 w-4" />
+                You&apos;re on Pro
+              </Button>
+              <Button
+                variant="outline"
+                className="w-full gap-2 text-muted-foreground"
+                onClick={handleManageBilling}
+                disabled={portalLoading}
+              >
+                <ExternalLink className="h-4 w-4" />
+                {portalLoading ? 'Opening...' : 'Manage Subscription'}
+              </Button>
+            </div>
           ) : (
             <Button
               className="w-full gap-2"
@@ -142,7 +191,7 @@ export default function PricingPage() {
       </div>
 
       <p className="mt-8 text-center text-xs text-muted-foreground">
-        Payments are processed securely by LemonSqueezy. Cancel anytime from your billing portal.
+        Payments are processed securely by LemonSqueezy. Cancel anytime — no refunds on the current billing period.
       </p>
     </div>
   )

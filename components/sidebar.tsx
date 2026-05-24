@@ -18,6 +18,7 @@ import {
   Layers,
   Zap,
   Shield,
+  CreditCard,
 } from 'lucide-react'
 import { toast } from 'sonner'
 import JobLogo from '@/components/job-logo'
@@ -238,50 +239,95 @@ export default function Sidebar({ userEmail, isAdmin }: SidebarProps) {
         </div>
       )}
 
+      {/* ── Billing (Pro only) ─────────────────────────────── */}
+      {usage?.isSubscribed && !collapsed && (
+        <div className="mx-3 mb-2">
+          <Link href="/pricing">
+            <div className={cn(
+              'group flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-medium transition-all duration-150',
+              pathname === '/pricing'
+                ? 'bg-primary/[0.08] text-primary font-semibold ring-1 ring-primary/[0.12]'
+                : 'text-muted-foreground hover:bg-sidebar-accent hover:text-foreground hover:translate-x-0.5'
+            )}>
+              <span className={cn(
+                'inline-flex items-center justify-center w-7 h-7 rounded-md shrink-0 transition-colors duration-150',
+                pathname === '/pricing' ? 'bg-primary/15' : 'group-hover:bg-primary/[0.06]'
+              )}>
+                <CreditCard className="h-4 w-4 shrink-0" />
+              </span>
+              Billing
+            </div>
+          </Link>
+        </div>
+      )}
+
+      {usage?.isSubscribed && collapsed && (
+        <div className="flex justify-center mb-1">
+          <Link href="/pricing" title="Billing">
+            <div className={cn(
+              'flex items-center justify-center h-9 w-9 rounded-md transition-colors',
+              pathname === '/pricing'
+                ? 'bg-primary/[0.08] text-primary'
+                : 'text-muted-foreground hover:bg-sidebar-accent hover:text-foreground'
+            )}>
+              <CreditCard className="h-4 w-4" />
+            </div>
+          </Link>
+        </div>
+      )}
+
       {/* ── User ───────────────────────────────────────────── */}
       <div className={cn(
         'border-t border-sidebar-border',
         collapsed ? 'flex flex-col items-center gap-1 p-2' : 'px-3 py-3'
       )}>
         {!collapsed && (
-          <div className="flex items-center gap-3 mb-2 px-1">
-            <Avatar className={cn(
-              'h-7 w-7 shrink-0 ring-2',
-              usage?.isSubscribed ? 'ring-amber-400/60' : 'ring-primary/20'
+          <Link href="/profile" className="block mb-2">
+            <div className={cn(
+              'flex items-center gap-3 px-1 py-1.5 rounded-lg transition-colors',
+              pathname === '/profile'
+                ? 'bg-primary/[0.06]'
+                : 'hover:bg-sidebar-accent'
             )}>
-              <AvatarFallback className="text-[10px] bg-primary text-primary-foreground font-semibold">
-                {initials}
-              </AvatarFallback>
-            </Avatar>
-            <div className="min-w-0">
-              <div className="flex items-center gap-1.5">
-                <p className="text-xs font-medium text-foreground/80 truncate max-w-[100px]">
-                  {userEmail.split('@')[0]}
+              <Avatar className={cn(
+                'h-7 w-7 shrink-0 ring-2',
+                usage?.isSubscribed ? 'ring-amber-400/60' : 'ring-primary/20'
+              )}>
+                <AvatarFallback className="text-[10px] bg-primary text-primary-foreground font-semibold">
+                  {initials}
+                </AvatarFallback>
+              </Avatar>
+              <div className="min-w-0">
+                <div className="flex items-center gap-1.5">
+                  <p className="text-xs font-medium text-foreground/80 truncate max-w-[100px]">
+                    {userEmail.split('@')[0]}
+                  </p>
+                  {usage?.isSubscribed && (
+                    <Badge className="h-4 px-1.5 text-[9px] font-bold tracking-wide bg-amber-400/15 text-amber-600 border-amber-400/30 dark:text-amber-400">
+                      PRO
+                    </Badge>
+                  )}
+                </div>
+                <p className="text-[10px] text-muted-foreground truncate max-w-[130px]">
+                  {userEmail}
                 </p>
-                {usage?.isSubscribed && (
-                  <Badge className="h-4 px-1.5 text-[9px] font-bold tracking-wide bg-amber-400/15 text-amber-600 border-amber-400/30 dark:text-amber-400">
-                    PRO
-                  </Badge>
-                )}
               </div>
-              <p className="text-[10px] text-muted-foreground truncate max-w-[130px]">
-                {userEmail}
-              </p>
             </div>
-          </div>
+          </Link>
         )}
 
         {collapsed ? (
           <>
-            {usage?.isSubscribed && (
-              <div className="flex justify-center mb-1">
-                <Avatar className="h-7 w-7 ring-2 ring-amber-400/60">
-                  <AvatarFallback className="text-[10px] bg-primary text-primary-foreground font-semibold">
-                    {initials}
-                  </AvatarFallback>
-                </Avatar>
-              </div>
-            )}
+            <Link href="/profile" title="Profile" className="flex justify-center mb-1">
+              <Avatar className={cn(
+                'h-7 w-7 ring-2 transition-opacity hover:opacity-80',
+                usage?.isSubscribed ? 'ring-amber-400/60' : 'ring-primary/20'
+              )}>
+                <AvatarFallback className="text-[10px] bg-primary text-primary-foreground font-semibold">
+                  {initials}
+                </AvatarFallback>
+              </Avatar>
+            </Link>
             <FeedbackDialog collapsed />
             <button
               onClick={handleSignOut}
