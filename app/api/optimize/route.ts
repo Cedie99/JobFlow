@@ -5,6 +5,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import Anthropic from '@anthropic-ai/sdk'
 import { createClient } from '@/lib/supabase/server'
 import { getUsageStatus, incrementUsage } from '@/lib/subscription'
+import { buildResumePrintHTML } from '@/lib/resume-print'
 import type { OptimizeResponse } from '@/types'
 
 const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY! })
@@ -199,12 +200,13 @@ OUTPUT ALSO INCLUDES:
     }
 
     const result = JSON.parse(textBlock.text) as OptimizeResponse
+    const resumePdfHtml = buildResumePrintHTML(result)
 
     let savedId: string | null = null
     try {
       const { data } = await supabase
         .from('resume_optimizations')
-        .insert({ user_id: user.id, label: deriveLabel(jobDescription), job_description: jobDescription, result })
+        .insert({ user_id: user.id, label: deriveLabel(jobDescription), job_description: jobDescription, result, resume_pdf_html: resumePdfHtml })
         .select('id')
         .single()
       savedId = data?.id ?? null
@@ -214,7 +216,7 @@ OUTPUT ALSO INCLUDES:
       await incrementUsage(user.id).catch(() => {})
     }
 
-    return NextResponse.json({ ...result, savedId })
+    return NextResponse.json({ ...result, savedId, resumePdfHtml })
   } catch (err) {
     console.error('Optimize API error:', err)
     return NextResponse.json(

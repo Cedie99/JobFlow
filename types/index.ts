@@ -67,6 +67,7 @@ export interface CareerProfile {
 
 export interface OptimizeResponse {
   savedId?: string | null
+  resumePdfHtml?: string | null
   matchScore?: number | null
   matchWarning?: string | null
   optimizedResume: {
@@ -138,6 +139,7 @@ export interface SavedOptimization {
   id: string
   label: string
   created_at: string
+  resume_pdf_html?: string | null
   result?: OptimizeResponse
 }
 

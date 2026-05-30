@@ -62,6 +62,8 @@ create table if not exists resume_optimizations (
   created_at timestamptz default now()
 );
 
+alter table resume_optimizations add column if not exists resume_pdf_html text;
+
 alter table resume_optimizations enable row level security;
 
 create policy "Users can view own optimizations"

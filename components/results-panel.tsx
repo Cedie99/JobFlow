@@ -9,6 +9,7 @@ import { Textarea } from '@/components/ui/textarea'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog'
 import { Copy, Check, FileText, Mail, Send, Pencil, Download, Save, X, Plus, Loader2, AlertTriangle, Trash2 } from 'lucide-react'
 import { toast } from 'sonner'
+import { buildResumePrintHTML, printResumeHTML, printCoverLetterHTML, downloadCoverLetterAsWord } from '@/lib/resume-print'
 import type { OptimizeResponse, ContactInfo, ExperienceEntry, ProjectEntry, EducationEntry, AwardEntry, CertificationEntry } from '@/types'
 
 interface ResultsPanelProps {
@@ -54,45 +55,6 @@ function buildResumeText(d: OptimizeResponse): string {
     ...(r.awards?.length > 0 ? ['', '=== AWARDS ===', ...r.awards.map(a => `${a.name} — ${a.issuer} (${a.year})`)] : []),
     ...(r.certifications?.length > 0 ? ['', '=== CERTIFICATIONS ===', ...r.certifications.map(c => `${c.name} — ${c.issuer} (${c.year})`)] : []),
   ].join('\n')
-}
-
-function buildPrintHTML(d: OptimizeResponse): string {
-  const r = d.optimizedResume
-  const contactLine = [r.contactInfo.email, r.contactInfo.phone, r.contactInfo.location].filter(Boolean).join(' | ')
-  const esc = (s: string) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
-  const liParts: string[] = []
-  if (r.contactInfo.linkedin) {
-    const href = /^https?:\/\//i.test(r.contactInfo.linkedin) ? r.contactInfo.linkedin : `https://${r.contactInfo.linkedin}`
-    liParts.push(`<a href="${esc(href)}" style="color:#1a56db;text-decoration:none">${esc(r.contactInfo.linkedinLabel || 'LinkedIn')}</a>`)
-  }
-  if (r.contactInfo.github) {
-    const href = /^https?:\/\//i.test(r.contactInfo.github) ? r.contactInfo.github : `https://${r.contactInfo.github}`
-    liParts.push(`<a href="${esc(href)}" style="color:#1a56db;text-decoration:none">${esc(r.contactInfo.githubLabel || 'GitHub')}</a>`)
-  }
-  const linksLine = liParts.join(' | ')
-  return `<!DOCTYPE html><html><head><meta charset="UTF-8"><title>${esc(r.contactInfo.name)} - Resume</title>
-<style>*{margin:0;padding:0;box-sizing:border-box}body{font-family:Arial,sans-serif;font-size:11pt;line-height:1.45;color:#111;padding:36px 48px;max-width:850px;margin:0 auto}
-h1{font-size:17pt;text-align:center;margin-bottom:3px}
-.contact{text-align:center;font-size:9.5pt;color:#444;margin-bottom:2px}
-h2{font-size:10pt;font-weight:700;text-transform:uppercase;letter-spacing:.8px;border-bottom:1.5px solid #333;margin:14px 0 6px;padding-bottom:2px;color:#222}
-.row{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:2px}
-.bold{font-weight:700}.sub{font-size:9.5pt;color:#555;margin-bottom:1px}
-ul{list-style:none;padding-left:14px;margin-bottom:8px}
-ul li{margin-bottom:2px}ul li::before{content:"•";margin-right:6px;color:#333}
-.skill{margin-bottom:3px}.skill-cat{font-weight:700}
-p{margin-bottom:8px}
-@media print{body{padding:20px 30px}@page{margin:.8cm;size:A4}}</style></head><body>
-<h1>${esc(r.contactInfo.name)}</h1>
-${contactLine ? `<p class="contact">${esc(contactLine)}</p>` : ''}
-${linksLine ? `<p class="contact">${linksLine}</p>` : ''}
-<h2>Professional Summary</h2><p>${esc(r.summary)}</p>
-${r.education?.length ? `<h2>Education</h2>${r.education.map(e => `<div class="row"><div><div class="bold">${esc(e.degree)}</div><div class="sub">${esc(e.institution)}${e.location ? ', ' + esc(e.location) : ''}${e.gpa ? ' · GPA: ' + esc(e.gpa) : ''}</div></div><div>${esc(e.year)}</div></div>`).join('')}` : ''}
-${r.experience?.length ? `<h2>Work Experience</h2>${r.experience.map(e => `<div class="row"><div><div class="bold">${esc(e.title)}</div><div class="sub">${esc(e.company)}${e.location ? ' · ' + esc(e.location) : ''}</div></div><div style="font-size:9.5pt">${esc(e.duration)}</div></div><ul>${e.bullets.map(b => `<li>${esc(b)}</li>`).join('')}</ul>`).join('')}` : ''}
-${r.projects?.length ? `<h2>Projects</h2>${r.projects.map(p => `<div class="row"><div><div class="bold">${esc(p.name)}</div><div class="sub">${esc(p.techStack)}</div></div>${p.duration ? `<div style="font-size:9.5pt">${esc(p.duration)}</div>` : ''}</div><ul>${p.bullets.map(b => `<li>${esc(b)}</li>`).join('')}</ul>`).join('')}` : ''}
-${r.skills?.length ? `<h2>Skills</h2>${r.skills.map(s => `<div class="skill"><span class="skill-cat">${esc(s.category)}:</span> ${s.items.map(esc).join(', ')}</div>`).join('')}` : ''}
-${r.awards?.length ? `<h2>Awards &amp; Honors</h2>${r.awards.map(a => `<div class="row"><span>${esc(a.name)} — ${esc(a.issuer)}</span><span>${esc(a.year)}</span></div>`).join('')}` : ''}
-${r.certifications?.length ? `<h2>Certifications</h2>${r.certifications.map(c => `<div class="row"><span>${esc(c.name)} — ${esc(c.issuer)}</span><span>${esc(c.year)}</span></div>`).join('')}` : ''}
-</body></html>`
 }
 
 const LABEL_SUGGESTIONS = [
@@ -211,13 +173,14 @@ export default function ResultsPanel({ result, onResultChange }: ResultsPanelPro
 
   async function handleSaveEdits() {
     setEditing(false)
-    onResultChange(draft)
+    const nextDraft = { ...draft, resumePdfHtml: buildResumePrintHTML(draft) }
+    onResultChange(nextDraft)
     if (savedId) {
       try {
         const res = await fetch(`/api/optimizations/${savedId}`, {
           method: 'PATCH',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ result: draft }),
+          body: JSON.stringify({ result: nextDraft, resume_pdf_html: nextDraft.resumePdfHtml }),
         })
         if (res.ok) toast.success('Changes saved')
         else toast.error('Could not persist changes')
@@ -231,10 +194,11 @@ export default function ResultsPanel({ result, onResultChange }: ResultsPanelPro
     if (!labelInput.trim()) return
     setSaving(true)
     try {
+      const resumePdfHtml = buildResumePrintHTML(draft)
       const res = await fetch('/api/optimizations', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ label: labelInput.trim(), result: draft }),
+        body: JSON.stringify({ label: labelInput.trim(), result: { ...draft, resumePdfHtml }, resume_pdf_html: resumePdfHtml }),
       })
       if (!res.ok) throw new Error()
       const data = await res.json()
@@ -246,11 +210,7 @@ export default function ResultsPanel({ result, onResultChange }: ResultsPanelPro
   }
 
   function handleDownloadPDF() {
-    const win = window.open('', '_blank', 'width=850,height=1000')
-    if (!win) { toast.error('Allow popups to download PDF'); return }
-    win.document.write(buildPrintHTML(draft))
-    win.document.close()
-    setTimeout(() => win.print(), 400)
+    if (!printResumeHTML(draft.resumePdfHtml ?? buildResumePrintHTML(draft))) toast.error('Allow popups to download PDF')
   }
 
   const resumeText = buildResumeText(draft)
@@ -620,7 +580,15 @@ export default function ResultsPanel({ result, onResultChange }: ResultsPanelPro
         <TabsContent value="cover" className="flex-1 min-h-0 mt-3 flex flex-col gap-3">
           <div className="flex items-center justify-between shrink-0">
             <p className="text-sm font-medium text-muted-foreground">Cover Letter</p>
-            <CopyButton text={draft.coverLetter} />
+            <div className="flex gap-1.5">
+              <CopyButton text={draft.coverLetter} />
+              <Button size="sm" variant="outline" onClick={() => { if (!printCoverLetterHTML(draft.coverLetter, r.contactInfo.name)) toast.error('Allow popups to download PDF') }} className="gap-1">
+                <Download className="h-3.5 w-3.5" />PDF
+              </Button>
+              <Button size="sm" variant="outline" onClick={() => downloadCoverLetterAsWord(draft.coverLetter, r.contactInfo.name)} className="gap-1">
+                <Download className="h-3.5 w-3.5" />Word
+              </Button>
+            </div>
           </div>
           <div className="flex-1 min-h-0 overflow-y-auto rounded-lg border bg-card p-4">
             {editing

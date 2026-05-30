@@ -56,7 +56,7 @@ export default function OptimizationHistory({ onLoad, activeId, refreshTrigger }
       const res = await fetch(`/api/optimizations/${id}`)
       if (!res.ok) throw new Error()
       const data = await res.json()
-      onLoad({ ...(data.result as OptimizeResponse), savedId: data.id }, data.label ?? '')
+      onLoad({ ...(data.result as OptimizeResponse), savedId: data.id, resumePdfHtml: data.resume_pdf_html ?? null }, data.label ?? '')
       toast.success('Optimization loaded')
     } catch {
       toast.error('Could not load this optimization')
@@ -197,7 +197,10 @@ export default function OptimizationHistory({ onLoad, activeId, refreshTrigger }
                     {/* Actions row */}
                     <div className="flex items-center gap-1.5 mt-2.5 pt-2 border-t border-border/60">
                       <button
-                        onClick={(e) => { e.stopPropagation(); !isActive && handleLoad(item.id) }}
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          if (!isActive) handleLoad(item.id)
+                        }}
                         disabled={!!loadingId || !!deletingId || isActive}
                         className={cn(
                           'flex-1 flex items-center justify-center gap-1.5 rounded-lg py-1.5 text-[11px] font-medium transition-all duration-150',
