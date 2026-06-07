@@ -186,3 +186,27 @@
 .count-pop {
   animation: count-pop 0.35s cubic-bezier(0.34, 1.56, 0.64, 1) both;
 }
+
+/* ─── Aurora hero drift ─────────────────────────────────────────────────── */
+@keyframes aurora-float {
+  0%, 100% { transform: translate3d(0, 0, 0) scale(1); }
+  33%      { transform: translate3d(18px, -14px, 0) scale(1.08); }
+  66%      { transform: translate3d(-14px, 12px, 0) scale(0.95); }
+}
+.aurora-float {
+  animation: aurora-float 14s ease-in-out infinite;
+}
+
+/* ─── Profile card entrance ─────────────────────────────────────────────── */
+@keyframes profile-card-in {
+  from { opacity: 0; transform: translateY(10px) scale(0.98); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+.profile-card {
+  animation: profile-card-in 0.32s cubic-bezier(0.34, 1.2, 0.64, 1) both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .aurora-float,
+  .profile-card { animation: none; }
+}
