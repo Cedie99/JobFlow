@@ -7,7 +7,7 @@ import { Input } from '@/components/ui/input'
 import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog'
 import {
   Plus, Layers, CheckCircle, Clock, Trash2, Wand2,
-  ArrowRight, Loader2, MessageSquare, Sparkles, Eye,
+  ArrowRight, Loader2, MessageSquare, Sparkles, Eye, X,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { toast } from 'sonner'
@@ -46,6 +46,9 @@ export default function ProfilesPage() {
   const [profileName, setProfileName] = useState('')
   const [creating, setCreating] = useState(false)
   const [deletingId, setDeletingId] = useState<string | null>(null)
+  const [detailsModalOpen, setDetailsModalOpen] = useState(false)
+  const [selectedProfile, setSelectedProfile] = useState<ProfileSummary | null>(null)
+  const [profileDetails, setProfileDetails] = useState<any>(null)
 
   useEffect(() => { fetchProfiles() }, [])
 
@@ -96,17 +99,27 @@ export default function ProfilesPage() {
     }
   }
 
+  async function handleProfileClick(profile: ProfileSummary) {
+    setSelectedProfile(profile)
+    setDetailsModalOpen(true)
+    try {
+      const res = await fetch(`/api/career-profiles/${profile.id}`)
+      if (res.ok) {
+        setProfileDetails(await res.json())
+      }
+    } catch {
+      toast.error('Could not load profile details')
+    }
+  }
+
   return (
     <div className="p-6 space-y-6">
       {/* Header */}
       <div className="flex items-start justify-between gap-4">
         <div>
-          <div className="flex items-center gap-2 mb-1">
-            <Layers className="h-5 w-5 text-primary" />
-            <h1 className="text-2xl font-bold">Career Profiles</h1>
-          </div>
+          <h1 className="text-2xl font-bold">Career Profiles</h1>
           <p className="text-muted-foreground text-sm">
-            One AI interview per career path — then generate tailored resumes for any job in that field, instantly.
+            Pivoting to a new career? Build a profile for each target role — our AI interviews you to surface relevant skills and experiences, then generates tailored resumes.
           </p>
         </div>
         <Button onClick={() => setDialogOpen(true)} size="sm" className="shrink-0">
@@ -116,92 +129,63 @@ export default function ProfilesPage() {
       </div>
 
       {/* ── Career Builder Explainer ─────────────────────── */}
-      <div className="rounded-xl border border-border bg-card overflow-hidden">
-        <div className="px-5 pt-4 pb-3 border-b border-border/60 bg-muted/20">
-          <div className="flex items-center gap-2">
-            <Sparkles className="h-3.5 w-3.5 text-primary" />
-            <p className="text-xs font-semibold text-primary">How the AI Resume Builder works</p>
-          </div>
-          <p className="text-[11px] text-muted-foreground mt-1 leading-relaxed">
-            You&apos;re not limited to one career path. Create a separate profile for every role type you want to target —
-            software engineering, customer service, marketing, anything — and generate unlimited tailored resumes from each.
-          </p>
+      <div className="rounded-2xl bg-gradient-to-br from-primary/5 via-primary/[0.02] to-transparent border border-primary/10 p-6">
+        <div className="flex items-center gap-2 mb-6">
+          <Sparkles className="h-5 w-5 text-primary" />
+          <h2 className="text-lg font-bold">How career profiles work</h2>
         </div>
 
-        <div className="px-5 py-4">
-          {/* 3-step flow */}
-          <div className="flex items-start gap-2 mb-5">
-            {/* Step 1 */}
-            <div className="flex-1 flex flex-col items-center text-center gap-2">
-              <div className="h-10 w-10 rounded-xl bg-primary/10 border border-primary/20 flex items-center justify-center">
-                <MessageSquare className="h-[18px] w-[18px] text-primary" />
-              </div>
-              <div>
-                <div className="flex items-center justify-center gap-1.5 mb-0.5">
-                  <p className="text-[11px] font-semibold">1. Guided Interview</p>
-                  <span className="text-[8px] px-1.5 py-px rounded-full bg-primary/10 text-primary font-semibold uppercase tracking-wide leading-none py-0.5">
-                    Behavioral
-                  </span>
-                </div>
-                <p className="text-[10px] text-muted-foreground leading-relaxed">
-                  Cedie asks about real experiences and surfaces transferable skills — even ones you wouldn&apos;t think to mention
-                </p>
-              </div>
+        {/* 3-step flow - simplified */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          {/* Step 1 */}
+          <div className="flex flex-col items-center text-center space-y-3">
+            <div className="h-14 w-14 rounded-2xl bg-primary flex items-center justify-center shadow-lg shadow-primary/20">
+              <MessageSquare className="h-7 w-7 text-primary-foreground" />
             </div>
-
-            <div className="flex items-center justify-center pt-4 shrink-0">
-              <ArrowRight className="h-3.5 w-3.5 text-muted-foreground/25" />
-            </div>
-
-            {/* Step 2 */}
-            <div className="flex-1 flex flex-col items-center text-center gap-2">
-              <div className="h-10 w-10 rounded-xl bg-primary/10 border border-primary/20 flex items-center justify-center">
-                <Layers className="h-[18px] w-[18px] text-primary" />
-              </div>
-              <div>
-                <p className="text-[11px] font-semibold">2. Profile Saved</p>
-                <p className="text-[10px] text-muted-foreground mt-0.5 leading-relaxed">
-                  Your career profile is stored and reusable for any job in this field
-                </p>
-              </div>
-            </div>
-
-            <div className="flex items-center justify-center pt-4 shrink-0">
-              <ArrowRight className="h-3.5 w-3.5 text-muted-foreground/25" />
-            </div>
-
-            {/* Step 3 */}
-            <div className="flex-1 flex flex-col items-center text-center gap-2">
-              <div className="h-10 w-10 rounded-xl bg-emerald-50 border border-emerald-200 flex items-center justify-center">
-                <Wand2 className="h-[18px] w-[18px] text-emerald-600" />
-              </div>
-              <div>
-                <p className="text-[11px] font-semibold text-emerald-700">3. Build Any Resume</p>
-                <p className="text-[10px] text-muted-foreground mt-0.5 leading-relaxed">
-                  Paste any job posting → Claude writes a tailored resume in seconds
-                </p>
-              </div>
+            <div>
+              <p className="text-sm font-bold">1. AI Interview</p>
+              <p className="text-xs text-muted-foreground mt-1">Our AI asks targeted questions about your target career</p>
             </div>
           </div>
 
-          {/* Career diversity */}
-          <div className="border-t border-border/60 pt-3">
-            <p className="text-[10px] font-semibold text-muted-foreground/50 uppercase tracking-wider mb-2">
-              Works for any career you want to apply to:
-            </p>
-            <div className="flex flex-wrap gap-1.5">
-              {CAREER_EXAMPLES.map(career => (
-                <span
-                  key={career}
-                  className="text-[10px] px-2 py-0.5 rounded-full bg-muted border border-border text-muted-foreground"
-                >
-                  {career}
-                </span>
-              ))}
-              <span className="text-[10px] px-2 py-0.5 rounded-full bg-primary/10 border border-primary/20 text-primary font-medium">
-                + any role you&apos;re after
-              </span>
+          {/* Step 2 */}
+          <div className="flex flex-col items-center text-center space-y-3">
+            <div className="h-14 w-14 rounded-2xl bg-primary flex items-center justify-center shadow-lg shadow-primary/20">
+              <Layers className="h-7 w-7 text-primary-foreground" />
             </div>
+            <div>
+              <p className="text-sm font-bold">2. Skills Mapped</p>
+              <p className="text-xs text-muted-foreground mt-1">We surface relevant experience even from unrelated backgrounds</p>
+            </div>
+          </div>
+
+          {/* Step 3 */}
+          <div className="flex flex-col items-center text-center space-y-3">
+            <div className="h-14 w-14 rounded-2xl bg-emerald-500 flex items-center justify-center shadow-lg shadow-emerald-500/20">
+              <Wand2 className="h-7 w-7 text-white" />
+            </div>
+            <div>
+              <p className="text-sm font-bold text-emerald-700">3. Build Resumes</p>
+              <p className="text-xs text-muted-foreground mt-1">Generate tailored resumes for any job in that new field</p>
+            </div>
+          </div>
+        </div>
+
+        {/* Career examples - simplified */}
+        <div className="mt-6 pt-6 border-t border-border/50">
+          <p className="text-xs font-medium text-muted-foreground mb-3">Pivot to any career path</p>
+          <div className="flex flex-wrap gap-2">
+            {['Software Engineer', 'Product Manager', 'UX Designer', 'Marketing', 'Sales', 'Customer Service'].map(career => (
+              <span
+                key={career}
+                className="text-xs px-3 py-1.5 rounded-full bg-background border border-border text-muted-foreground hover:border-primary/50 transition-colors"
+              >
+                {career}
+              </span>
+            ))}
+            <span className="text-xs px-3 py-1.5 rounded-full bg-primary/10 border border-primary/20 text-primary font-medium">
+              + any role
+            </span>
           </div>
         </div>
       </div>
@@ -212,119 +196,92 @@ export default function ProfilesPage() {
           <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
         </div>
       ) : profiles.length === 0 ? (
-        <div className="flex flex-col items-center justify-center py-16 text-center">
-          <div className="rounded-full bg-muted p-5 mb-4">
-            <Layers className="h-8 w-8 text-muted-foreground/40" />
+        <div className="flex flex-col items-center justify-center py-20 text-center">
+          <div className="h-20 w-20 rounded-3xl bg-gradient-to-br from-primary/10 to-primary/5 flex items-center justify-center mb-6">
+            <Layers className="h-10 w-10 text-primary" />
           </div>
-          <p className="text-base font-semibold">No profiles yet</p>
-          <p className="text-sm text-muted-foreground mt-1 mb-5 max-w-xs">
-            Create your first career profile. Cedie will interview you in 5–10 minutes, then you can build resumes for any job in that field.
+          <h3 className="text-xl font-bold mb-2">Ready to pivot careers?</h3>
+          <p className="text-sm text-muted-foreground mb-6 max-w-sm">
+            Our AI will interview you about your target career, surface relevant skills from your background, and help you build tailored resumes.
           </p>
-          <Button onClick={() => setDialogOpen(true)}>
+          <Button onClick={() => setDialogOpen(true)} size="lg" className="shadow-lg shadow-primary/20">
             <Plus className="h-4 w-4 mr-2" />
-            Create your first profile
+            Create Profile
           </Button>
         </div>
       ) : (
         <>
-          <div className="flex items-center justify-between">
-            <p className="text-xs font-semibold text-muted-foreground/50 uppercase tracking-wider">
-              Your career paths ({profiles.length})
-            </p>
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-sm font-semibold text-muted-foreground">
+              Your profiles ({profiles.length})
+            </h3>
           </div>
 
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
             {profiles.map(profile => (
               <div
                 key={profile.id}
-                onClick={() => router.push(`/profiles/${profile.id}`)}
-                className="group relative rounded-xl border border-border bg-card p-5 cursor-pointer hover:border-primary/30 hover:shadow-sm transition-all duration-150"
+                onClick={() => handleProfileClick(profile)}
+                className="group flex flex-col items-center text-center cursor-pointer"
               >
-                {/* Status badge */}
-                <div className={cn(
-                  'inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-medium mb-3',
-                  profile.completed
-                    ? 'bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200'
-                    : 'bg-amber-50 text-amber-700 ring-1 ring-amber-200'
-                )}>
-                  {profile.completed
-                    ? <CheckCircle className="h-3 w-3" />
-                    : <Clock className="h-3 w-3" />}
-                  {profile.completed ? 'Ready to build' : 'Interview in progress'}
-                </div>
-
-                <h3 className="font-semibold text-base leading-tight mb-1">{profile.name}</h3>
-                <p className="text-[11px] text-muted-foreground">
-                  Created {format(new Date(profile.created_at), 'MMM d, yyyy')}
-                </p>
-
-                {/* Unlock hint for incomplete profiles */}
-                {!profile.completed && (
-                  <p className="text-[10px] text-amber-600/80 mt-1.5 flex items-center gap-1">
-                    <Wand2 className="h-2.5 w-2.5" />
-                    Finish interview to unlock resume builder
-                  </p>
-                )}
-
-                {/* Actions */}
-                <div className="flex items-center gap-2 mt-4 pt-3 border-t border-border/60">
+                {/* Person illustration - faceless 3D */}
+                <div className="relative mb-4">
+                  <div className="h-28 w-28 rounded-2xl bg-gradient-to-br from-primary/10 via-primary/5 to-transparent group-hover:shadow-xl group-hover:shadow-primary/15 transition-all duration-300 overflow-hidden relative">
+                    {/* Background pattern */}
+                    <div className="absolute inset-0 opacity-30">
+                      <div className="absolute top-0 right-0 w-16 h-16 bg-primary/20 rounded-full blur-2xl" />
+                      <div className="absolute bottom-0 left-0 w-12 h-12 bg-primary/10 rounded-full blur-xl" />
+                    </div>
+                    
+                    {/* Person silhouette - 3D effect */}
+                    <div className="relative flex flex-col items-center justify-center h-full pt-2">
+                      {/* Head with 3D shadow */}
+                      <div className="relative">
+                        <div className="h-14 w-14 rounded-full bg-gradient-to-br from-primary via-primary/80 to-primary/60 shadow-2xl shadow-primary/30" />
+                        {/* 3D highlight */}
+                        <div className="absolute top-2 left-2 w-4 h-4 rounded-full bg-white/30 blur-sm" />
+                        {/* 3D shadow */}
+                        <div className="absolute bottom-2 right-2 w-4 h-4 rounded-full bg-black/10 blur-sm" />
+                      </div>
+                      {/* Body with 3D shadow */}
+                      <div className="mt-1 h-8 w-16 rounded-t-3xl bg-gradient-to-b from-primary/90 to-primary/70 shadow-xl shadow-primary/20" />
+                      {/* Body highlight */}
+                      <div className="absolute top-16 left-1/2 -translate-x-1/2 w-8 h-2 rounded-full bg-white/20 blur-sm" />
+                    </div>
+                  </div>
+                  
+                  {/* Status indicator */}
+                  {profile.completed && (
+                    <div className="absolute -bottom-1 -right-1 h-7 w-7 rounded-full bg-emerald-500 border-3 border-background flex items-center justify-center shadow-lg">
+                      <CheckCircle className="h-4 w-4 text-white" />
+                    </div>
+                  )}
                   {!profile.completed && (
-                    <button
-                      onClick={(e) => { e.stopPropagation(); router.push(`/profiles/${profile.id}`) }}
-                      className="flex-1 flex items-center justify-center gap-1.5 text-[11px] font-medium text-primary bg-primary/10 hover:bg-primary hover:text-primary-foreground rounded-lg py-1.5 transition-all"
-                    >
-                      <MessageSquare className="h-3 w-3" />
-                      Continue Interview
-                    </button>
+                    <div className="absolute -bottom-1 -right-1 h-7 w-7 rounded-full bg-amber-500 border-3 border-background flex items-center justify-center shadow-lg">
+                      <Clock className="h-4 w-4 text-white" />
+                    </div>
                   )}
-
-                  {profile.completed && (
-                    <button
-                      onClick={(e) => { e.stopPropagation(); router.push(`/profiles/${profile.id}/details`) }}
-                      className="flex-1 flex items-center justify-center gap-1.5 text-[11px] font-medium text-blue-700 bg-blue-50 hover:bg-blue-600 hover:text-white px-2.5 py-1.5 rounded-lg transition-all border border-blue-200 hover:border-blue-600"
-                    >
-                      <Eye className="h-3 w-3" />
-                      View Details
-                    </button>
-                  )}
-
-                  {profile.completed && (
-                    <button
-                      onClick={(e) => { e.stopPropagation(); router.push(`/build?profileId=${profile.id}`) }}
-                      className="flex items-center gap-1.5 text-[11px] font-medium text-emerald-700 bg-emerald-50 hover:bg-emerald-600 hover:text-white px-2.5 py-1.5 rounded-lg transition-all border border-emerald-200 hover:border-emerald-600"
-                    >
-                      <Wand2 className="h-3 w-3" />
-                      Build Resume
-                    </button>
-                  )}
-
-                  <button
-                    onClick={(e) => handleDelete(profile.id, e)}
-                    disabled={deletingId === profile.id}
-                    className="flex items-center justify-center h-7 w-7 rounded-lg text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors"
-                  >
-                    {deletingId === profile.id
-                      ? <Loader2 className="h-3 w-3 animate-spin" />
-                      : <Trash2 className="h-3 w-3" />}
-                  </button>
                 </div>
 
-                {/* Hover arrow */}
-                <ArrowRight className="absolute top-5 right-5 h-4 w-4 text-muted-foreground/0 group-hover:text-primary/40 transition-all duration-150 group-hover:translate-x-0.5" />
+                {/* Career title */}
+                <h3 className="font-semibold text-sm mb-1 group-hover:text-primary transition-colors">{profile.name}</h3>
+                <p className="text-xs text-muted-foreground">
+                  {profile.completed ? 'Ready to build' : 'In progress'}
+                </p>
               </div>
             ))}
 
             {/* New profile card */}
             <button
               onClick={() => setDialogOpen(true)}
-              className="rounded-xl border-2 border-dashed border-border hover:border-primary/40 hover:bg-primary/[0.02] p-5 flex flex-col items-center justify-center gap-3 text-muted-foreground hover:text-primary transition-all duration-150 min-h-[160px]"
+              className="rounded-2xl border-2 border-dashed border-border hover:border-primary/50 hover:bg-primary/[0.03] p-6 flex flex-col items-center justify-center gap-4 text-muted-foreground hover:text-primary transition-all duration-200 min-h-[180px]"
             >
-              <div className="rounded-full bg-muted p-2.5">
-                <Plus className="h-4 w-4" />
+              <div className="h-12 w-12 rounded-2xl bg-muted flex items-center justify-center group-hover:bg-primary/10 transition-colors">
+                <Plus className="h-6 w-6" />
               </div>
               <div className="text-center">
-                <span className="text-sm font-medium block">New Profile</span>
-                <span className="text-[10px] text-muted-foreground/60 mt-0.5 block">Add another career path</span>
+                <span className="text-sm font-semibold block">Add New Profile</span>
+                <span className="text-xs text-muted-foreground/60 mt-1 block">Create another career path</span>
               </div>
             </button>
           </div>
@@ -350,12 +307,12 @@ export default function ProfilesPage() {
                   Create Career Profile
                 </DialogTitle>
                 <p className="text-[11px] text-muted-foreground mt-0.5">
-                  Tell Cedie which career you&apos;re targeting — he&apos;ll do the rest.
+                  Pivoting to a new career? Our AI will interview you to surface relevant skills from your background.
                 </p>
                 <div className="flex items-center gap-2 mt-2.5">
                   <span className="inline-flex items-center gap-1 text-[9px] px-2 py-1 rounded-full bg-primary/15 text-primary font-bold uppercase tracking-wider border border-primary/20">
                     <MessageSquare className="h-2.5 w-2.5" />
-                    Guided Behavioral Interview
+                    AI Career Interview
                   </span>
                   <span className="text-[10px] text-muted-foreground">· 5–10 min</span>
                 </div>
@@ -366,9 +323,9 @@ export default function ProfilesPage() {
           {/* Form body */}
           <div className="px-6 py-5 space-y-5">
             <div className="space-y-2">
-              <label className="text-sm font-semibold">What career path is this profile for?</label>
+              <label className="text-sm font-semibold">What career do you want to pivot to?</label>
               <Input
-                placeholder="e.g. Software Engineer, Call Center Agent…"
+                placeholder="e.g. Software Engineer, Product Manager…"
                 value={profileName}
                 onChange={e => setProfileName(e.target.value)}
                 onKeyDown={e => e.key === 'Enter' && !creating && handleCreate()}
@@ -376,8 +333,7 @@ export default function ProfilesPage() {
                 className="h-11 text-sm"
               />
               <p className="text-[11px] text-muted-foreground/70 leading-relaxed">
-                Cedie uses a <span className="font-semibold text-muted-foreground">guided behavioral interview</span> —
-                he&apos;ll ask about real experiences and surface transferable skills, even from backgrounds that seem unrelated.
+                Our AI asks targeted questions about your target career and surfaces transferable skills — even from backgrounds that seem unrelated.
               </p>
             </div>
 
@@ -426,6 +382,64 @@ export default function ProfilesPage() {
                 : <><Wand2 className="h-4 w-4" />Start Interview <ArrowRight className="h-4 w-4 ml-0.5" /></>}
             </Button>
           </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Profile Details Modal */}
+      <Dialog open={detailsModalOpen} onOpenChange={setDetailsModalOpen}>
+        <DialogContent className="sm:max-w-lg">
+          {selectedProfile && profileDetails && (
+            <>
+              <DialogTitle className="text-lg font-bold">{selectedProfile.name}</DialogTitle>
+              
+              <div className="space-y-4">
+                {/* Status */}
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-semibold text-muted-foreground">Status</span>
+                  <span className={cn(
+                    "text-xs font-medium px-2 py-0.5 rounded-full",
+                    selectedProfile.completed ? "bg-emerald-100 text-emerald-700" : "bg-amber-100 text-amber-700"
+                  )}>
+                    {selectedProfile.completed ? "Completed" : "In Progress"}
+                  </span>
+                </div>
+
+                {/* Summary */}
+                {profileDetails.profile?.summary && (
+                  <div>
+                    <p className="text-xs font-semibold text-muted-foreground mb-1">Summary</p>
+                    <p className="text-sm text-muted-foreground leading-relaxed">{profileDetails.profile.summary}</p>
+                  </div>
+                )}
+
+                {/* Action buttons */}
+                <div className="pt-4 border-t border-border flex gap-2">
+                  {selectedProfile.completed && (
+                    <button
+                      onClick={() => { setDetailsModalOpen(false); router.push(`/build?profileId=${selectedProfile.id}`) }}
+                      className="flex-1 text-xs font-semibold text-primary bg-primary/10 hover:bg-primary hover:text-primary-foreground rounded-lg py-2.5 transition-all"
+                    >
+                      Build Resume
+                    </button>
+                  )}
+                  {!selectedProfile.completed && (
+                    <button
+                      onClick={() => { setDetailsModalOpen(false); router.push(`/profiles/${selectedProfile.id}`) }}
+                      className="flex-1 text-xs font-semibold text-primary bg-primary/10 hover:bg-primary hover:text-primary-foreground rounded-lg py-2.5 transition-all"
+                    >
+                      Continue Interview
+                    </button>
+                  )}
+                  <button
+                    onClick={() => { setDetailsModalOpen(false); router.push(`/profiles/${selectedProfile.id}/details`) }}
+                    className="text-xs font-semibold text-muted-foreground hover:text-foreground px-4 py-2.5 rounded-lg hover:bg-muted transition-all"
+                  >
+                    View Full
+                  </button>
+                </div>
+              </div>
+            </>
+          )}
         </DialogContent>
       </Dialog>
     </div>

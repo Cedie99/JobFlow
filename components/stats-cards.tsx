@@ -1,10 +1,30 @@
 import Link from 'next/link'
 import { Card, CardContent } from '@/components/ui/card'
 import { Briefcase, TrendingUp, Clock, Award, ArrowRight } from 'lucide-react'
+import type { DashboardStats } from '@/lib/dashboard-data'
 import type { JobApplication } from '@/types'
 
 interface StatsCardsProps {
-  applications: JobApplication[]
+  stats: DashboardStats
+}
+
+export function buildStatsFromApplications(applications: JobApplication[]): DashboardStats {
+  const total = applications.length
+  const rejected = applications.filter((a) => a.status === 'rejected').length
+  const withdrawn = applications.filter((a) => a.status === 'withdrawn').length
+  const interviews = applications.filter((a) => a.status === 'interview').length
+  const offers = applications.filter((a) => a.status === 'offer').length
+  const active = total - rejected - withdrawn
+
+  return {
+    total,
+    active,
+    interviews,
+    offers,
+    rejections: rejected,
+    interviewRate: total > 0 ? Math.round((interviews / total) * 100) : 0,
+    offerRate: interviews > 0 ? Math.round((offers / interviews) * 100) : 0,
+  }
 }
 
 function StatCard({
@@ -50,17 +70,8 @@ function StatCard({
   )
 }
 
-export default function StatsCards({ applications }: StatsCardsProps) {
-  const total = applications.length
-  const active = applications.filter(
-    (a) => !['rejected', 'withdrawn'].includes(a.status)
-  ).length
-  const interviews = applications.filter((a) => a.status === 'interview').length
-  const offers = applications.filter((a) => a.status === 'offer').length
-
-  const interviewRate = total > 0 ? Math.round((interviews / total) * 100) : 0
-  const offerRate = interviews > 0 ? Math.round((offers / interviews) * 100) : 0
-  const rejections = applications.filter((a) => a.status === 'rejected').length
+export default function StatsCards({ stats }: StatsCardsProps) {
+  const { total, active, interviews, offers, rejections, interviewRate, offerRate } = stats
 
   return (
     <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">

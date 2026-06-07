@@ -1,7 +1,9 @@
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
-import { createClient, getUser } from '@/lib/supabase/server'
+import { getUser } from '@/lib/supabase/server'
 import StatsCards from '@/components/stats-cards'
+import DashboardCharts from '@/components/dashboard-charts'
+import { getDashboardData } from '@/lib/dashboard-data'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import {
@@ -10,7 +12,8 @@ import {
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { format, formatDistanceToNowStrict, isBefore, isToday, isTomorrow, addDays, startOfDay, differenceInCalendarDays } from 'date-fns'
-import type { JobApplication } from '@/types'
+
+export const runtime = 'edge'
 
 const STATUS_BADGE: Record<string, string> = {
   applied: 'bg-blue-50 text-blue-700 ring-1 ring-blue-200',
@@ -29,46 +32,23 @@ const PIPELINE_STAGES = [
 ] as const
 
 export default async function DashboardPage() {
-  const [user, supabase] = await Promise.all([getUser(), createClient()])
+  const user = await getUser()
   if (!user) redirect('/login')
 
-  const DASHBOARD_COLS = 'id, company_name, job_title, status, next_follow_up, applied_date, job_posting_url'
-
-  const [{ data: recentAppsRaw }, { data: allAppsRaw }] = await Promise.all([
-    supabase
-      .from('job_applications')
-      .select(DASHBOARD_COLS)
-      .order('created_at', { ascending: false })
-      .limit(5),
-    supabase
-      .from('job_applications')
-      .select(DASHBOARD_COLS),
-  ])
-
-  const recentApps = recentAppsRaw as JobApplication[] | null
-  const allApps = allAppsRaw as JobApplication[] | null
+  const { stats, pipeline, recentApplications, followUps, allApplications } = await getDashboardData(user.id)
 
   const today = startOfDay(new Date())
   const inThreeDays = addDays(today, 3)
 
-  const followUpsDue = (allApps ?? []).filter((a: JobApplication) => {
+  const followUpsDue = followUps.filter((a) => {
     if (!a.next_follow_up) return false
-    const d = new Date(a.next_follow_up + 'T00:00:00')
+    const d = new Date(`${a.next_follow_up}T00:00:00`)
     return d <= inThreeDays
-  }).sort((a: JobApplication, b: JobApplication) =>
-    new Date(a.next_follow_up! + 'T00:00:00').getTime() -
-    new Date(b.next_follow_up! + 'T00:00:00').getTime()
-  )
+  })
 
-  const allFollowUps = (allApps ?? [])
-    .filter((a: JobApplication) => !!a.next_follow_up)
-    .sort((a: JobApplication, b: JobApplication) =>
-      new Date(a.next_follow_up! + 'T00:00:00').getTime() -
-      new Date(b.next_follow_up! + 'T00:00:00').getTime()
-    )
-    .slice(0, 7)
+  const allFollowUps = followUps.slice(0, 7)
 
-  const total = (allApps ?? []).length
+  const total = stats.total
   const displayName = user.email?.split('@')[0] ?? 'there'
 
   return (
@@ -104,7 +84,13 @@ export default async function DashboardPage() {
             </div>
           </div>
 
-          <StatsCards applications={(allApps as JobApplication[]) ?? []} />
+          <StatsCards stats={stats} />
+
+          {/* Charts */}
+          <DashboardCharts 
+            applications={allApplications || []} 
+            pipeline={pipeline} 
+          />
 
           {/* Follow-up alert banner */}
           {followUpsDue.length > 0 && (
@@ -115,8 +101,8 @@ export default async function DashboardPage() {
                   {followUpsDue.length} follow-up{followUpsDue.length !== 1 ? 's' : ''} due within 3 days
                 </p>
                 <div className="flex flex-wrap gap-x-3 gap-y-0.5 mt-1">
-                  {followUpsDue.slice(0, 3).map((a: JobApplication) => {
-                    const d = new Date(a.next_follow_up! + 'T00:00:00')
+                  {followUpsDue.slice(0, 3).map((a) => {
+                    const d = new Date(`${a.next_follow_up}T00:00:00`)
                     const overdue = isBefore(d, today)
                     return (
                       <span key={a.id} className="text-xs text-amber-700">
@@ -152,9 +138,9 @@ export default async function DashboardPage() {
                 </Link>
               </CardHeader>
               <CardContent>
-                {recentApps && recentApps.length > 0 ? (
+                {recentApplications && recentApplications.length > 0 ? (
                   <div className="space-y-2">
-                    {recentApps.map((app: JobApplication) => (
+                    {recentApplications.map((app) => (
                       <div
                         key={app.id}
                         className="group flex items-center justify-between gap-3 rounded-lg px-2 py-2 hover:bg-muted/50 transition-colors -mx-2 cursor-default"
@@ -221,7 +207,7 @@ export default async function DashboardPage() {
                 {total > 0 ? (
                   <div className="space-y-4">
                     {PIPELINE_STAGES.map(({ key, label, color }) => {
-                      const count = (allApps ?? []).filter((a: JobApplication) => a.status === key).length
+                      const count = pipeline.stages[key] ?? 0
                       const pct = Math.round((count / total) * 100)
                       return (
                         <div key={key}>
@@ -241,24 +227,21 @@ export default async function DashboardPage() {
                         </div>
                       )
                     })}
-                    {(() => {
-                      const closed = (allApps ?? []).filter(
-                        (a: JobApplication) => a.status === 'rejected' || a.status === 'withdrawn'
-                      ).length
-                      const closedPct = Math.round((closed / total) * 100)
-                      if (closed === 0) return null
-                      return (
-                        <div className="pt-1 border-t">
-                          <div className="flex items-center justify-between">
-                            <span className="text-xs text-muted-foreground/60">Closed (rejected / withdrawn)</span>
-                            <div className="flex items-center gap-2">
-                              <span className="text-xs text-muted-foreground/40">{closedPct}%</span>
-                              <span className="text-xs font-medium text-muted-foreground tabular-nums w-5 text-right">{closed}</span>
-                            </div>
+                    {pipeline.closed > 0 && (
+                      <div className="pt-1 border-t">
+                        <div className="flex items-center justify-between">
+                          <span className="text-xs text-muted-foreground/60">Closed (rejected / withdrawn)</span>
+                          <div className="flex items-center gap-2">
+                            <span className="text-xs text-muted-foreground/40">
+                              {Math.round((pipeline.closed / total) * 100)}%
+                            </span>
+                            <span className="text-xs font-medium text-muted-foreground tabular-nums w-5 text-right">
+                              {pipeline.closed}
+                            </span>
                           </div>
                         </div>
-                      )
-                    })()}
+                      </div>
+                    )}
                   </div>
                 ) : (
                   <div className="text-center py-10 text-muted-foreground">
@@ -361,8 +344,8 @@ export default async function DashboardPage() {
             <CardContent>
               {allFollowUps.length > 0 ? (
                 <div className="space-y-2">
-                  {allFollowUps.map((app: JobApplication) => {
-                    const d = new Date(app.next_follow_up! + 'T00:00:00')
+                  {allFollowUps.map((app) => {
+                    const d = new Date(`${app.next_follow_up}T00:00:00`)
                     const overdue = isBefore(d, today)
                     const dueToday = isToday(d)
                     const dueTomorrow = isTomorrow(d)

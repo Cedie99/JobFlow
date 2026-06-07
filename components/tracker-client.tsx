@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button'
 import ApplicationTable from '@/components/application-table'
 import ApplicationDialog from '@/components/application-dialog'
 import ConfirmDialog from '@/components/confirm-dialog'
-import StatsCards from '@/components/stats-cards'
+import StatsCards, { buildStatsFromApplications } from '@/components/stats-cards'
 import { Plus, ClipboardList } from 'lucide-react'
 import { toast } from 'sonner'
 import type { JobApplication } from '@/types'
@@ -91,12 +91,9 @@ export default function TrackerClient({
   return (
     <div className="p-6 space-y-6">
       <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <ClipboardList className="h-5 w-5 text-primary" />
-          <div>
-            <h1 className="text-2xl font-bold">Application Tracker</h1>
-            <p className="text-muted-foreground text-sm">Track every job application in one place</p>
-          </div>
+        <div>
+          <h1 className="text-2xl font-bold">Application Tracker</h1>
+          <p className="text-muted-foreground text-sm">Track every job application in one place</p>
         </div>
         <Button onClick={openAdd} size="sm">
           <Plus className="h-4 w-4 mr-2" />
@@ -104,7 +101,7 @@ export default function TrackerClient({
         </Button>
       </div>
 
-      <StatsCards applications={applications} />
+      <StatsCards stats={buildStatsFromApplications(applications)} />
 
       {loading ? (
         <div className="flex items-center justify-center py-20">

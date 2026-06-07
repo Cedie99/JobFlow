@@ -6,7 +6,6 @@ import { usePathname, useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
-import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import {
   FileText,
   LayoutDashboard,
@@ -22,7 +21,6 @@ import {
 } from 'lucide-react'
 import { toast } from 'sonner'
 import JobLogo from '@/components/job-logo'
-import { Badge } from '@/components/ui/badge'
 import FeedbackDialog from '@/components/feedback-dialog'
 import type { UsageStatus } from '@/types'
 
@@ -33,7 +31,7 @@ interface SidebarProps {
 
 const navGroups = [
   {
-    label: null as string | null,
+    label: 'General',
     items: [
       { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
     ],
@@ -46,9 +44,14 @@ const navGroups = [
     ],
   },
   {
-    label: null as string | null,
+    label: 'Resume Optimizer',
     items: [
       { href: '/resume', label: 'Resume Optimizer', icon: FileText },
+    ],
+  },
+  {
+    label: 'Job Management',
+    items: [
       { href: '/tracker', label: 'Application Tracker', icon: ClipboardList },
     ],
   },
@@ -80,20 +83,20 @@ export default function Sidebar({ userEmail, isAdmin }: SidebarProps) {
   return (
     <aside
       className={cn(
-        'shrink-0 flex flex-col bg-sidebar border-r border-sidebar-border h-full transition-[width] duration-200 ease-in-out overflow-hidden',
+        'shrink-0 flex flex-col bg-blue-600 border-r border-blue-500 h-full transition-[width] duration-200 ease-in-out overflow-hidden',
         collapsed ? 'w-16' : 'w-64'
       )}
     >
       {/* ── Header ─────────────────────────────────────────── */}
       <div
         className={cn(
-          'flex items-center h-14 px-3 border-b border-sidebar-border shrink-0',
+          'flex items-center h-14 px-3 border-b border-blue-500 shrink-0',
           collapsed ? 'justify-center' : 'justify-between gap-2'
         )}
       >
         {!collapsed && (
           <div className="pl-1">
-            <JobLogo size="md" />
+            <JobLogo size="md" light />
           </div>
         )}
 
@@ -103,7 +106,7 @@ export default function Sidebar({ userEmail, isAdmin }: SidebarProps) {
           title={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
           className={cn(
             'flex items-center justify-center rounded-md transition-colors shrink-0',
-            'text-muted-foreground hover:text-foreground hover:bg-sidebar-accent',
+            'text-white hover:text-white/80 hover:bg-blue-700',
             collapsed ? 'h-9 w-9' : 'h-7 w-7'
           )}
         >
@@ -119,13 +122,13 @@ export default function Sidebar({ userEmail, isAdmin }: SidebarProps) {
           <div key={gi} className={gi > 0 ? 'mt-4' : ''}>
             {/* Section label */}
             {group.label && !collapsed && (
-              <p className="text-[9px] font-semibold uppercase tracking-widest text-muted-foreground/40 px-3 mb-1.5 select-none">
+              <p className="text-[9px] font-semibold uppercase tracking-widest text-white/80 px-3 mb-1.5 select-none">
                 {group.label}
               </p>
             )}
             {/* Collapsed divider */}
             {group.label && collapsed && (
-              <div className="h-px bg-sidebar-border mx-1 mb-2 mt-1" />
+              <div className="h-px bg-blue-500 mx-1 mb-2 mt-1" />
             )}
 
             <div className="space-y-0.5">
@@ -138,21 +141,16 @@ export default function Sidebar({ userEmail, isAdmin }: SidebarProps) {
                         'group relative flex items-center gap-2.5 rounded-lg text-sm font-medium transition-all duration-150',
                         collapsed ? 'justify-center p-2.5' : 'px-3 py-2',
                         isActive
-                          ? 'bg-primary/[0.08] text-primary font-semibold ring-1 ring-primary/[0.12]'
-                          : 'text-muted-foreground hover:bg-sidebar-accent hover:text-foreground hover:translate-x-0.5'
+                          ? 'bg-blue-700 text-white font-semibold'
+                          : 'text-white hover:bg-blue-700 hover:text-white hover:translate-x-0.5'
                       )}
                     >
-                      {/* Left accent bar */}
-                      {isActive && (
-                        <span className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-7 bg-primary rounded-r-full" />
-                      )}
-
                       {/* Icon roundel */}
                       <span className={cn(
                         'inline-flex items-center justify-center w-7 h-7 rounded-md shrink-0 transition-colors duration-150',
                         isActive
-                          ? 'bg-primary/15'
-                          : 'group-hover:bg-primary/[0.06]'
+                          ? 'bg-blue-500/30'
+                          : 'group-hover:bg-blue-500/20'
                       )}>
                         <Icon className={cn(
                           'h-4 w-4 shrink-0 transition-transform duration-150',
@@ -174,22 +172,22 @@ export default function Sidebar({ userEmail, isAdmin }: SidebarProps) {
       {isAdmin && (
         <div className={cn('px-3 mb-1', collapsed && 'px-2')}>
           {!collapsed && (
-            <p className="text-[9px] font-semibold uppercase tracking-widest text-muted-foreground/40 px-3 mb-1.5 select-none">
+            <p className="text-[9px] font-semibold uppercase tracking-widest text-white/80 px-3 mb-1.5 select-none">
               Admin
             </p>
           )}
-          {collapsed && <div className="h-px bg-sidebar-border mx-1 mb-2 mt-1" />}
+          {collapsed && <div className="h-px bg-blue-500 mx-1 mb-2 mt-1" />}
           <Link href="/admin" title={collapsed ? 'Admin Panel' : undefined}>
             <div className={cn(
               'group relative flex items-center gap-2.5 rounded-lg text-sm font-medium transition-all duration-150',
               collapsed ? 'justify-center p-2.5' : 'px-3 py-2',
               pathname.startsWith('/admin')
-                ? 'bg-amber-500/10 text-amber-600 dark:text-amber-400 font-semibold ring-1 ring-amber-500/20'
-                : 'text-muted-foreground hover:bg-sidebar-accent hover:text-foreground hover:translate-x-0.5'
+                ? 'bg-blue-700 text-white font-semibold'
+                : 'text-white hover:bg-blue-700 hover:text-white hover:translate-x-0.5'
             )}>
               <span className={cn(
                 'inline-flex items-center justify-center w-7 h-7 rounded-md shrink-0',
-                pathname.startsWith('/admin') ? 'bg-amber-500/15' : 'group-hover:bg-amber-500/10'
+                pathname.startsWith('/admin') ? 'bg-blue-500/30' : 'group-hover:bg-blue-500/20'
               )}>
                 <Shield className="h-4 w-4 shrink-0" />
               </span>
@@ -201,12 +199,12 @@ export default function Sidebar({ userEmail, isAdmin }: SidebarProps) {
 
       {/* ── Upgrade / Usage ────────────────────────────────── */}
       {usage && !usage.isSubscribed && !collapsed && (
-        <div className="mx-3 mb-2 rounded-lg border border-dashed border-primary/30 bg-primary/[0.04] p-3 space-y-2">
+        <div className="mx-3 mb-2 rounded-lg border border-dashed border-blue-400/50 bg-blue-700/30 p-3 space-y-2">
           <div className="flex items-center justify-between text-xs">
-            <span className="text-muted-foreground font-medium">Free uses</span>
+            <span className="text-white/80 font-medium">Free uses</span>
             <span className={cn(
               'font-semibold tabular-nums',
-              usage.usesCount >= usage.limit ? 'text-destructive' : 'text-foreground'
+              usage.usesCount >= usage.limit ? 'text-red-300' : 'text-white'
             )}>
               {usage.usesCount}/{usage.limit}
             </span>
@@ -221,7 +219,7 @@ export default function Sidebar({ userEmail, isAdmin }: SidebarProps) {
             />
           </div>
           <Link href="/pricing" className="block">
-            <div className="flex items-center gap-1.5 text-[11px] font-semibold text-primary hover:text-primary/80 transition-colors">
+            <div className="flex items-center gap-1.5 text-[11px] font-semibold text-white hover:text-white/80 transition-colors">
               <Zap className="h-3 w-3" />
               Upgrade to Pro — unlimited
             </div>
@@ -232,7 +230,7 @@ export default function Sidebar({ userEmail, isAdmin }: SidebarProps) {
       {usage && !usage.isSubscribed && collapsed && (
         <div className="flex justify-center mb-1">
           <Link href="/pricing" title="Upgrade to Pro">
-            <div className="flex items-center justify-center h-9 w-9 rounded-md text-primary hover:bg-primary/10 transition-colors">
+            <div className="flex items-center justify-center h-9 w-9 rounded-md text-white hover:bg-blue-700 transition-colors">
               <Zap className="h-4 w-4" />
             </div>
           </Link>
@@ -246,12 +244,12 @@ export default function Sidebar({ userEmail, isAdmin }: SidebarProps) {
             <div className={cn(
               'group flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-medium transition-all duration-150',
               pathname === '/pricing'
-                ? 'bg-primary/[0.08] text-primary font-semibold ring-1 ring-primary/[0.12]'
-                : 'text-muted-foreground hover:bg-sidebar-accent hover:text-foreground hover:translate-x-0.5'
+                ? 'bg-blue-700 text-white font-semibold'
+                : 'text-white hover:bg-blue-700 hover:text-white hover:translate-x-0.5'
             )}>
               <span className={cn(
                 'inline-flex items-center justify-center w-7 h-7 rounded-md shrink-0 transition-colors duration-150',
-                pathname === '/pricing' ? 'bg-primary/15' : 'group-hover:bg-primary/[0.06]'
+                pathname === '/pricing' ? 'bg-blue-500/30' : 'group-hover:bg-blue-500/20'
               )}>
                 <CreditCard className="h-4 w-4 shrink-0" />
               </span>
@@ -267,8 +265,8 @@ export default function Sidebar({ userEmail, isAdmin }: SidebarProps) {
             <div className={cn(
               'flex items-center justify-center h-9 w-9 rounded-md transition-colors',
               pathname === '/pricing'
-                ? 'bg-primary/[0.08] text-primary'
-                : 'text-muted-foreground hover:bg-sidebar-accent hover:text-foreground'
+                ? 'bg-blue-700 text-white'
+                : 'text-white hover:bg-blue-700 hover:text-white'
             )}>
               <CreditCard className="h-4 w-4" />
             </div>
@@ -276,63 +274,18 @@ export default function Sidebar({ userEmail, isAdmin }: SidebarProps) {
         </div>
       )}
 
-      {/* ── User ───────────────────────────────────────────── */}
+      {/* ── Actions ─────────────────────────────────────────── */}
       <div className={cn(
-        'border-t border-sidebar-border',
+        'border-t border-blue-500',
         collapsed ? 'flex flex-col items-center gap-1 p-2' : 'px-3 py-3'
       )}>
-        {!collapsed && (
-          <Link href="/profile" className="block mb-2">
-            <div className={cn(
-              'flex items-center gap-3 px-1 py-1.5 rounded-lg transition-colors',
-              pathname === '/profile'
-                ? 'bg-primary/[0.06]'
-                : 'hover:bg-sidebar-accent'
-            )}>
-              <Avatar className={cn(
-                'h-7 w-7 shrink-0 ring-2',
-                usage?.isSubscribed ? 'ring-amber-400/60' : 'ring-primary/20'
-              )}>
-                <AvatarFallback className="text-[10px] bg-primary text-primary-foreground font-semibold">
-                  {initials}
-                </AvatarFallback>
-              </Avatar>
-              <div className="min-w-0">
-                <div className="flex items-center gap-1.5">
-                  <p className="text-xs font-medium text-foreground/80 truncate max-w-[100px]">
-                    {userEmail.split('@')[0]}
-                  </p>
-                  {usage?.isSubscribed && (
-                    <Badge className="h-4 px-1.5 text-[9px] font-bold tracking-wide bg-amber-400/15 text-amber-600 border-amber-400/30 dark:text-amber-400">
-                      PRO
-                    </Badge>
-                  )}
-                </div>
-                <p className="text-[10px] text-muted-foreground truncate max-w-[130px]">
-                  {userEmail}
-                </p>
-              </div>
-            </div>
-          </Link>
-        )}
-
         {collapsed ? (
           <>
-            <Link href="/profile" title="Profile" className="flex justify-center mb-1">
-              <Avatar className={cn(
-                'h-7 w-7 ring-2 transition-opacity hover:opacity-80',
-                usage?.isSubscribed ? 'ring-amber-400/60' : 'ring-primary/20'
-              )}>
-                <AvatarFallback className="text-[10px] bg-primary text-primary-foreground font-semibold">
-                  {initials}
-                </AvatarFallback>
-              </Avatar>
-            </Link>
             <FeedbackDialog collapsed />
             <button
               onClick={handleSignOut}
               title="Sign out"
-              className="group flex items-center justify-center h-9 w-9 rounded-md text-muted-foreground hover:text-destructive hover:bg-red-50 transition-colors"
+              className="group flex items-center justify-center h-9 w-9 rounded-md text-white hover:text-red-300 hover:bg-red-900/30 transition-colors"
             >
               <LogOut className="h-4 w-4 transition-transform duration-150 group-hover:scale-110" />
             </button>
@@ -343,7 +296,7 @@ export default function Sidebar({ userEmail, isAdmin }: SidebarProps) {
             <Button
               variant="ghost"
               size="sm"
-              className="w-full justify-start text-muted-foreground hover:text-destructive hover:bg-red-50 group"
+              className="w-full justify-start text-white hover:text-red-300 hover:bg-red-900/30 group"
               onClick={handleSignOut}
             >
               <LogOut className="h-4 w-4 mr-2 transition-transform duration-150 group-hover:scale-110" />

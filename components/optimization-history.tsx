@@ -132,7 +132,7 @@ export default function OptimizationHistory({ onLoad, activeId, refreshTrigger }
 
       ) : (
         <div className="flex-1 overflow-y-auto">
-          <ul className="p-3 space-y-2">
+          <ul className="p-2.5 space-y-1.5">
             {items.map((item, i) => {
               const isActive   = item.id === activeId
               const isLoading  = loadingId  === item.id
@@ -144,87 +144,69 @@ export default function OptimizationHistory({ onLoad, activeId, refreshTrigger }
                   key={item.id}
                   onClick={() => !isLoading && !isDeleting && handleLoad(item.id)}
                   className={cn(
-                    'group relative rounded-xl border overflow-hidden cursor-pointer',
-                    'row-animate transition-all duration-200',
+                    'group relative rounded-lg border cursor-pointer',
+                    'transition-all duration-200 ease-out',
                     isActive
-                      ? 'border-primary/40 bg-primary/5 shadow-sm'
-                      : 'border-border bg-background hover:border-primary/30 hover:bg-muted/30 hover:shadow-sm',
-                    isExiting && 'opacity-0 scale-95 translate-x-3 pointer-events-none'
+                      ? 'border-primary/50 bg-primary/10 shadow-md'
+                      : 'border-border bg-card hover:border-primary/30 hover:bg-muted/50 hover:shadow-sm',
+                    isExiting && 'opacity-0 scale-95 translate-x-2 pointer-events-none'
                   )}
-                  style={{ animationDelay: `${i * 45}ms` }}
+                  style={{ animationDelay: `${i * 30}ms` }}
                 >
-                  {/* Active left accent bar */}
-                  {isActive && (
-                    <div className="absolute left-0 top-3 bottom-3 w-[3px] rounded-r-full bg-primary" />
-                  )}
-
-                  <div className="px-3 pt-3 pb-2.5">
-                    {/* Top row: icon + text */}
-                    <div className="flex items-start gap-2.5">
-                      <div className={cn(
-                        'rounded-lg p-1.5 shrink-0 mt-0.5 transition-colors duration-150',
-                        isActive
-                          ? 'bg-primary/15 text-primary'
-                          : 'bg-muted text-muted-foreground group-hover:bg-primary/10 group-hover:text-primary'
-                      )}>
-                        <FileText className="h-3.5 w-3.5" />
-                      </div>
-
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-start gap-1">
-                          <p className={cn(
-                            'text-xs font-medium leading-snug line-clamp-2 flex-1',
-                            isActive ? 'text-primary' : 'text-foreground'
-                          )}>
-                            {item.label}
-                          </p>
-                          {isActive && (
-                            <span className="shrink-0 inline-flex items-center gap-0.5 px-1.5 py-[3px] rounded-full text-[9px] font-semibold bg-primary text-primary-foreground leading-none">
-                              <Sparkles className="h-2 w-2" />
-                              Active
-                            </span>
-                          )}
-                        </div>
-                        <p className="text-[10px] text-muted-foreground mt-1.5 leading-tight">
-                          {formatItemDate(item.created_at)}
-                        </p>
-                        <p className="text-[10px] text-muted-foreground/50 leading-tight">
-                          {formatDistanceToNowStrict(new Date(item.created_at), { addSuffix: true })}
-                        </p>
-                      </div>
+                  <div className="flex items-center gap-3 p-3">
+                    {/* Icon */}
+                    <div className={cn(
+                      'rounded-lg p-2 shrink-0 transition-colors duration-200',
+                      isActive
+                        ? 'bg-primary/20 text-primary'
+                        : 'bg-muted text-muted-foreground group-hover:bg-primary/10 group-hover:text-primary'
+                    )}>
+                      {isLoading ? (
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                      ) : (
+                        <FileText className="h-4 w-4" />
+                      )}
                     </div>
 
-                    {/* Actions row */}
-                    <div className="flex items-center gap-1.5 mt-2.5 pt-2 border-t border-border/60">
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation()
-                          if (!isActive) handleLoad(item.id)
-                        }}
-                        disabled={!!loadingId || !!deletingId || isActive}
-                        className={cn(
-                          'flex-1 flex items-center justify-center gap-1.5 rounded-lg py-1.5 text-[11px] font-medium transition-all duration-150',
-                          isActive
-                            ? 'text-primary/50 cursor-default'
-                            : 'bg-primary/10 text-primary hover:bg-primary hover:text-primary-foreground disabled:opacity-40 disabled:cursor-not-allowed'
+                    {/* Content */}
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2">
+                        <p className={cn(
+                          'text-sm font-medium truncate',
+                          isActive ? 'text-primary' : 'text-foreground group-hover:text-primary'
+                        )}>
+                          {item.label}
+                        </p>
+                        {isActive && (
+                          <span className="shrink-0 inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-primary text-primary-foreground">
+                            <Sparkles className="h-2.5 w-2.5" />
+                            Active
+                          </span>
                         )}
-                      >
-                        {isLoading
-                          ? <Loader2 className="h-3 w-3 animate-spin" />
-                          : isActive ? 'Loaded' : 'Load'}
-                      </button>
-
-                      <button
-                        onClick={(e) => handleDelete(item.id, e)}
-                        disabled={isDeleting || !!loadingId}
-                        title="Delete"
-                        className="flex items-center justify-center h-[26px] w-[26px] rounded-lg text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors disabled:opacity-40 shrink-0"
-                      >
-                        {isDeleting
-                          ? <Loader2 className="h-3 w-3 animate-spin" />
-                          : <Trash2 className="h-3 w-3" />}
-                      </button>
+                      </div>
+                      <p className="text-xs text-muted-foreground mt-0.5">
+                        {formatItemDate(item.created_at)}
+                      </p>
                     </div>
+
+                    {/* Delete button */}
+                    <button
+                      onClick={(e) => handleDelete(item.id, e)}
+                      disabled={isDeleting || !!loadingId}
+                      title="Delete"
+                      className={cn(
+                        'flex items-center justify-center h-8 w-8 rounded-lg shrink-0 transition-all duration-200',
+                        'text-muted-foreground hover:text-destructive hover:bg-destructive/10',
+                        'opacity-0 group-hover:opacity-100 focus:opacity-100',
+                        'disabled:opacity-40 disabled:cursor-not-allowed'
+                      )}
+                    >
+                      {isDeleting ? (
+                        <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                      ) : (
+                        <Trash2 className="h-3.5 w-3.5" />
+                      )}
+                    </button>
                   </div>
                 </li>
               )

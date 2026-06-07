@@ -118,10 +118,7 @@ function BuildPageInner() {
     <div className="flex-1 overflow-y-auto">
     <div className="p-6 flex flex-col min-h-full">
       <div className="mb-6 shrink-0">
-        <div className="flex items-center gap-2 mb-1">
-          <Wand2 className="h-5 w-5 text-primary" />
-          <h1 className="text-2xl font-bold">Build Resume from Profile</h1>
-        </div>
+        <h1 className="text-2xl font-bold">Build Resume from Profile</h1>
         {/* Visual flow indicator */}
         <div className="flex items-center gap-2 text-sm text-muted-foreground flex-wrap">
           <span className="flex items-center gap-1.5">
@@ -141,7 +138,7 @@ function BuildPageInner() {
         </div>
       </div>
 
-      <div className={`grid gap-6 flex-1 min-h-0 ${result ? 'grid-cols-1 lg:grid-cols-2' : 'grid-cols-1 max-w-3xl'}`}>
+      <div className="grid gap-6 flex-1 min-h-0 grid-cols-1 lg:grid-cols-2">
 
         {/* Left: Profile selector + JD input */}
         <div className="space-y-4 overflow-y-auto">
@@ -376,7 +373,7 @@ function BuildPageInner() {
         </div>
 
         {/* Right: Results */}
-        {result && (
+        {result ? (
           <Card className="flex flex-col overflow-hidden">
             <CardHeader className="shrink-0">
               <CardTitle className="text-base">AI-Generated Output</CardTitle>
@@ -386,6 +383,28 @@ function BuildPageInner() {
             </CardHeader>
             <CardContent className="flex-1 min-h-0 overflow-hidden pb-4">
               <ResultsPanel result={result} onResultChange={setResult} />
+            </CardContent>
+          </Card>
+        ) : (
+          <Card className="flex flex-col overflow-hidden">
+            <CardHeader className="shrink-0">
+              <CardTitle className="text-base">AI-Generated Output</CardTitle>
+              <CardDescription className="text-xs">
+                Your tailored resume will appear here
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="flex-1 min-h-0 flex items-center justify-center pb-4">
+              <div className="text-center space-y-4">
+                <div className="rounded-full bg-muted p-6 mx-auto w-fit">
+                  <Wand2 className="h-8 w-8 text-muted-foreground/40" />
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-muted-foreground">No resume generated yet</p>
+                  <p className="text-xs text-muted-foreground/70 mt-1 max-w-xs mx-auto">
+                    Select a career profile, paste a job description, and click generate to create your tailored resume.
+                  </p>
+                </div>
+              </div>
             </CardContent>
           </Card>
         )}
