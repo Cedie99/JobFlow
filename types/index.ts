@@ -1,3 +1,5 @@
+export type Gender = 'male' | 'female'
+
 export type ApplicationStatus =
   | 'applied'
   | 'screening'

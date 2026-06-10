@@ -48,6 +48,8 @@ create policy "Users can manage own profile"
   using (auth.uid() = user_id)
   with check (auth.uid() = user_id);
 
+alter table user_profiles add column if not exists gender text check (gender in ('male', 'female'));
+
 create trigger update_user_profiles_updated_at
   before update on user_profiles
   for each row execute function update_updated_at_column();

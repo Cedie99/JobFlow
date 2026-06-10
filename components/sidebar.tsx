@@ -10,7 +10,7 @@ import {
   FileText,
   LayoutDashboard,
   LogOut,
-  ClipboardList,
+  BriefcaseBusiness,
   PanelLeftClose,
   PanelLeftOpen,
   Wand2,
@@ -37,7 +37,7 @@ const navGroups = [
     ],
   },
   {
-    label: 'AI Resume Builder',
+    label: 'Career Shifting',
     items: [
       { href: '/profiles', label: 'Career Profiles', icon: Layers },
       { href: '/build', label: 'Build Resume', icon: Wand2 },
@@ -52,7 +52,7 @@ const navGroups = [
   {
     label: 'Job Management',
     items: [
-      { href: '/tracker', label: 'Application Tracker', icon: ClipboardList },
+      { href: '/tracker', label: 'Application Tracker', icon: BriefcaseBusiness },
     ],
   },
 ]

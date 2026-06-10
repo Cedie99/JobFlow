@@ -65,7 +65,7 @@ export default function ResumePage() {
             {result ? (
               <Card className="flex flex-col overflow-hidden">
                 <CardHeader className="shrink-0">
-                  <CardTitle className="text-base">AI-Generated Output</CardTitle>
+                  <CardTitle className="text-base">Tailored Resume</CardTitle>
                   <CardDescription className="text-xs">
                     Optimized resume · Cover letter · Application email
                   </CardDescription>
@@ -77,7 +77,7 @@ export default function ResumePage() {
             ) : (
               <Card className="flex flex-col overflow-hidden">
                 <CardHeader className="shrink-0">
-                  <CardTitle className="text-base">AI-Generated Output</CardTitle>
+                  <CardTitle className="text-base">Tailored Resume</CardTitle>
                   <CardDescription className="text-xs">
                     Your optimized resume will appear here
                   </CardDescription>

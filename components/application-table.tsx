@@ -32,6 +32,26 @@ const STATUS_CLASS: Record<string, string> = {
   withdrawn: 'bg-zinc-100 text-zinc-600 ring-1 ring-zinc-300',
 }
 
+const FILTER_ACTIVE_CLASS: Record<string, string> = {
+  all: 'bg-primary text-primary-foreground shadow-sm',
+  applied: 'bg-blue-100 text-blue-700 ring-1 ring-blue-300 shadow-sm',
+  screening: 'bg-amber-100 text-amber-700 ring-1 ring-amber-300 shadow-sm',
+  interview: 'bg-violet-100 text-violet-700 ring-1 ring-violet-300 shadow-sm',
+  offer: 'bg-emerald-100 text-emerald-700 ring-1 ring-emerald-300 shadow-sm',
+  rejected: 'bg-red-100 text-red-700 ring-1 ring-red-300 shadow-sm',
+  withdrawn: 'bg-zinc-100 text-zinc-600 ring-1 ring-zinc-300 shadow-sm',
+}
+
+const FILTER_INACTIVE_CLASS: Record<string, string> = {
+  all: 'bg-muted text-muted-foreground hover:text-foreground hover:bg-secondary',
+  applied: 'text-muted-foreground hover:text-blue-600 hover:bg-blue-50/50',
+  screening: 'text-muted-foreground hover:text-amber-600 hover:bg-amber-50/50',
+  interview: 'text-muted-foreground hover:text-violet-600 hover:bg-violet-50/50',
+  offer: 'text-muted-foreground hover:text-emerald-600 hover:bg-emerald-50/50',
+  rejected: 'text-muted-foreground hover:text-red-600 hover:bg-red-50/50',
+  withdrawn: 'text-muted-foreground hover:text-zinc-600 hover:bg-zinc-100/50',
+}
+
 const STATUS_OPTIONS = [
   'all', 'applied', 'screening', 'interview', 'offer', 'rejected', 'withdrawn',
 ] as const
@@ -85,8 +105,8 @@ export default function ApplicationTable({
               className={cn(
                 'px-3 py-1 rounded-full text-xs font-medium transition-all duration-150 capitalize whitespace-nowrap',
                 statusFilter === status
-                  ? 'bg-primary text-primary-foreground shadow-sm'
-                  : 'bg-muted text-muted-foreground hover:text-foreground hover:bg-secondary'
+                  ? FILTER_ACTIVE_CLASS[status]
+                  : FILTER_INACTIVE_CLASS[status]
               )}
             >
               {status === 'all' ? 'All' : status}

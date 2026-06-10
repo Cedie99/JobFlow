@@ -68,20 +68,7 @@ export default async function DashboardPage() {
                 {total > 0 && ` · ${total} application${total !== 1 ? 's' : ''} tracked`}
               </p>
             </div>
-            <div className="flex gap-2 shrink-0">
-              <Link href="/resume">
-                <Button variant="outline" size="sm" className="hover:border-primary/40 hover:text-primary transition-colors">
-                  <FileText className="h-4 w-4 mr-2" />
-                  Optimize Resume
-                </Button>
-              </Link>
-              <Link href="/tracker">
-                <Button size="sm" className="shadow-sm hover:shadow transition-shadow">
-                  <Plus className="h-4 w-4 mr-2" />
-                  Add Application
-                </Button>
-              </Link>
-            </div>
+
           </div>
 
           <StatsCards stats={stats} />

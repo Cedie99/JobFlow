@@ -40,8 +40,8 @@ export default function ResumeForm({ onResult, onLoading, loading }: ResumeFormP
       'text/plain': ['.txt'],
     },
     maxFiles: 1,
-    maxSize: 5 * 1024 * 1024,
-    onDropRejected: () => toast.error('File must be PDF, DOCX, or TXT under 5MB'),
+    maxSize: 10 * 1024 * 1024,
+    onDropRejected: () => toast.error('File must be PDF, DOCX, or TXT under 10MB'),
   })
 
   function removeFile() {
@@ -130,7 +130,7 @@ export default function ResumeForm({ onResult, onLoading, loading }: ResumeFormP
               <p className="text-sm font-medium">
                 {isDragActive ? 'Drop your resume here' : 'Drag & drop or click to upload'}
               </p>
-              <p className="text-xs text-muted-foreground mt-1">PDF, DOCX, or TXT · Max 5MB</p>
+              <p className="text-xs text-muted-foreground mt-1">PDF, DOCX, or TXT · Max 10MB</p>
             </div>
             <div className="flex items-center gap-2 text-xs text-muted-foreground">
               <div className="h-px flex-1 bg-border" />
