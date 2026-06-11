@@ -154,7 +154,7 @@ export async function POST(request: NextRequest) {
     }
 
     const message = await client.messages.create({
-      model: 'claude-3-opus-20240229',
+      model: 'claude-sonnet-4-20250514',
       max_tokens: 8000,
       thinking: { type: 'enabled', budget_tokens: 2000 },
       output_config: {
