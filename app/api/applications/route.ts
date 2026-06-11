@@ -15,7 +15,9 @@ export async function GET() {
       .limit(50)
 
     if (error) return NextResponse.json({ error: error.message }, { status: 500 })
-    return NextResponse.json(data)
+    return NextResponse.json(data, {
+      headers: { 'Cache-Control': 'private, s-maxage=30, stale-while-revalidate=60' },
+    })
   } catch (err) {
     console.error('GET /api/applications', err)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
@@ -42,7 +44,10 @@ export async function POST(request: NextRequest) {
       .single()
 
     if (error) return NextResponse.json({ error: error.message }, { status: 500 })
-    return NextResponse.json(data, { status: 201 })
+    return NextResponse.json(data, { 
+      status: 201,
+      headers: { 'Cache-Control': 'private, no-cache, no-store, must-revalidate' },
+    })
   } catch (err) {
     console.error('POST /api/applications', err)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })

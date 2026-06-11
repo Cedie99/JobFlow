@@ -1,8 +1,7 @@
 'use client'
 
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
-import { Bell, Settings } from 'lucide-react'
-import { Button } from '@/components/ui/button'
+import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
@@ -30,14 +29,7 @@ export default function DashboardHeader({ userEmail }: DashboardHeaderProps) {
       </div>
 
       <div className="flex items-center gap-3">
-        <Button variant="ghost" size="icon" className="h-9 w-9">
-          <Bell className="h-4 w-4" />
-        </Button>
-        <Button variant="ghost" size="icon" className="h-9 w-9">
-          <Settings className="h-4 w-4" />
-        </Button>
-        
-        <div className="flex items-center gap-3 pl-3 border-l border-border">
+        <Link href="/profile" className="flex items-center gap-3 pl-3 border-l border-border">
           <Avatar className="h-9 w-9 cursor-pointer hover:opacity-80 transition-opacity">
             <AvatarFallback className="bg-primary text-primary-foreground font-semibold text-sm">
               {initials}
@@ -47,7 +39,7 @@ export default function DashboardHeader({ userEmail }: DashboardHeaderProps) {
             <p className="text-sm font-medium text-foreground">{userEmail.split('@')[0]}</p>
             <p className="text-xs text-muted-foreground">{userEmail}</p>
           </div>
-        </div>
+        </Link>
       </div>
     </header>
   )

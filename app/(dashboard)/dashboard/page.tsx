@@ -13,8 +13,6 @@ import {
 import { cn } from '@/lib/utils'
 import { format, formatDistanceToNowStrict, isBefore, isToday, isTomorrow, addDays, startOfDay, differenceInCalendarDays } from 'date-fns'
 
-export const runtime = 'edge'
-
 const STATUS_BADGE: Record<string, string> = {
   applied: 'bg-blue-50 text-blue-700 ring-1 ring-blue-200',
   screening: 'bg-amber-50 text-amber-700 ring-1 ring-amber-200',
