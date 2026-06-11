@@ -116,8 +116,16 @@ export async function POST(request: NextRequest) {
       max_tokens: 4000,
       thinking: { type: 'adaptive' },
       output_config: { format: { type: 'json_schema' as const, schema: PROFILE_SCHEMA } },
-      system: `Extract a structured professional profile from this interview transcript. Only include information explicitly mentioned. Use "" or [] for missing fields. Write summary in first person (2–3 sentences). workStyle is a paragraph on how they work and collaborate. careerGoals is a paragraph on their ambitions. personalityTraits is 3–6 short descriptive phrases.`,
-      messages: [{ role: 'user', content: `Interview transcript:\n\n${conversation}\n\nExtract the complete profile.` }],
+      system: `Extract a structured professional profile from this interview transcript. Only include information explicitly mentioned. Use "" or [] for missing fields. Write summary in first person (2–3 sentences). workStyle is a paragraph on how they work and collaborate. careerGoals is a paragraph on their ambitions. personalityTraits is 3–6 short descriptive phrases.
+
+CRITICAL RULE FOR WORK EXPERIENCE:
+- Each experience entry MUST have bullets that ONLY describe achievements for THAT specific role at THAT specific company.
+- Do NOT mix, transfer, or reuse bullets between different companies or roles.
+- Every bullet must be specific to the exact title, company, and duration listed in that experience entry.
+- If the user discussed 3 jobs, output exactly 3 experience entries with bullets unique to each job.`,
+      messages: [{ role: 'user', content: `Interview transcript:\n\n${conversation}\n\nExtract the complete profile.
+
+IMPORTANT: The user may have discussed multiple jobs during the interview. Each job they mention should become a separate experience entry in the output. You MUST keep achievements tied to the specific company/role where they occurred. Do not transfer bullets between different jobs. The number of experience entries must match the number of distinct jobs the user discussed.` }],
     })
 
     const textBlock = response.content.find(b => b.type === 'text')

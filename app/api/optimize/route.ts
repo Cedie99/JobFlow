@@ -175,6 +175,20 @@ RESUME SECTIONS (all required, output in this order):
 7. awards — ALL awards, honors, and recognition from the resume. Return [] if none.
 8. certifications — ALL certifications and licenses. Return [] if none.
 
+CRITICAL RULE FOR WORK EXPERIENCE — ZERO TOLERANCE FOR BULLET MIXING:
+- Each experience entry MUST have bullets that ONLY describe achievements for THAT specific role at THAT specific company.
+- Do NOT mix, transfer, or reuse bullets between different companies or roles — THIS IS THE MOST IMPORTANT RULE.
+- Every bullet must be specific to the exact title, company, and duration listed in THAT experience entry.
+- If the input resume has 3 jobs, output exactly 3 experience entries with bullets unique to each job.
+- SORT EXPERIENCE ENTRIES IN REVERSE CHRONOLOGICAL ORDER (most recent job first). Use the duration field to determine order (e.g., "2023 – Present" comes before "2021 – 2023").
+
+EXPLICIT EXAMPLE OF WHAT IS FORBIDDEN:
+Input has:
+- Job A (Oracle): bullets about "database indexing", "SQL aggregation", "query response time"
+- Job B (Freelance): bullets about "client projects", "React development"
+
+Your output MUST keep "database indexing" bullets under Job A (Oracle). You MUST NOT move them to Job B (Freelance). Each bullet stays with its original company — no exceptions.
+
 BULLET POINT RULES:
 - Every bullet must use one of: STAR (Situation→Task→Action→Result), CAR (Challenge→Action→Result), XYZ (Accomplished X, measured by Y, by doing Z)
 - Lead with a strong action verb
@@ -189,7 +203,9 @@ OUTPUT ALSO INCLUDES:
       messages: [
         {
           role: 'user',
-          content: `Here is my current resume:\n\n${resumeText}\n\n---\n\nHere is the job description I'm applying for:\n\n${jobDescription}\n\nPlease optimize my resume for this role, create a cover letter, and draft a professional email.`,
+          content: `Here is my current resume:\n\n${resumeText}\n\n---\n\nHere is the job description I'm applying for:\n\n${jobDescription}\n\nPlease optimize my resume for this role, create a cover letter, and draft a professional email.
+
+IMPORTANT: The resume above contains multiple work experiences, each with its own company, title, and bullet points. In your output, you MUST preserve this exact structure — each output experience entry must correspond to ONE input job, with bullets rewritten/tailored for that specific role only. Do not move bullets between companies. Do not merge bullets from different jobs. The number of experience entries in your output must match the number of jobs in the input resume.`,
         },
       ],
     })

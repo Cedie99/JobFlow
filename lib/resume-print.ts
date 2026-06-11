@@ -1,7 +1,22 @@
-import type { OptimizeResponse } from '@/types'
+import type { OptimizeResponse, ExperienceEntry } from '@/types'
+
+function parseEndDate(duration: string): number {
+  const currentYear = new Date().getFullYear()
+  const parts = duration.split(/[–-]/).map(s => s.trim())
+  const endPart = parts[parts.length - 1] || ''
+  const yearMatch = endPart.match(/\b(19|20)\d{2}\b/)
+  if (yearMatch) return parseInt(yearMatch[0], 10)
+  if (/present|current|now/i.test(endPart)) return currentYear + 1
+  return 0
+}
+
+function sortExperienceReverseChronological(experience: ExperienceEntry[]): ExperienceEntry[] {
+  return [...experience].sort((a, b) => parseEndDate(b.duration) - parseEndDate(a.duration))
+}
 
 export function buildResumePrintHTML(d: OptimizeResponse): string {
   const r = d.optimizedResume
+  const sortedExperience = sortExperienceReverseChronological(r.experience ?? [])
   const contactLine = [r.contactInfo.email, r.contactInfo.phone, r.contactInfo.location].filter(Boolean).join(' | ')
   const esc = (s: string) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
   const liParts: string[] = []
@@ -31,7 +46,7 @@ ${contactLine ? `<p class="contact">${esc(contactLine)}</p>` : ''}
 ${linksLine ? `<p class="contact">${linksLine}</p>` : ''}
 <h2>Professional Summary</h2><p>${esc(r.summary)}</p>
 ${r.education?.length ? `<h2>Education</h2>${r.education.map(e => `<div class="row"><div><div class="bold">${esc(e.degree)}</div><div class="sub">${esc(e.institution)}${e.location ? ', ' + esc(e.location) : ''}${e.gpa ? ' · GPA: ' + esc(e.gpa) : ''}</div></div><div>${esc(e.year)}</div></div>`).join('')}` : ''}
-${r.experience?.length ? `<h2>Work Experience</h2>${r.experience.map(e => `<div class="row"><div><div class="bold">${esc(e.title)}</div><div class="sub">${esc(e.company)}${e.location ? ' · ' + esc(e.location) : ''}</div></div><div style="font-size:9.5pt">${esc(e.duration)}</div></div><ul>${e.bullets.map(b => `<li>${esc(b)}</li>`).join('')}</ul>`).join('')}` : ''}
+${sortedExperience.length ? `<h2>Work Experience</h2>${sortedExperience.map(e => `<div class="row"><div><div class="bold">${esc(e.title)}</div><div class="sub">${esc(e.company)}${e.location ? ' · ' + esc(e.location) : ''}</div></div><div style="font-size:9.5pt">${esc(e.duration)}</div></div><ul>${e.bullets.map(b => `<li>${esc(b)}</li>`).join('')}</ul>`).join('')}` : ''}
 ${r.projects?.length ? `<h2>Projects</h2>${r.projects.map(p => `<div class="row"><div><div class="bold">${esc(p.name)}</div><div class="sub">${esc(p.techStack)}</div></div>${p.duration ? `<div style="font-size:9.5pt">${esc(p.duration)}</div>` : ''}</div><ul>${p.bullets.map(b => `<li>${esc(b)}</li>`).join('')}</ul>`).join('')}` : ''}
 ${r.skills?.length ? `<h2>Skills</h2>${r.skills.map(s => `<div class="skill"><span class="skill-cat">${esc(s.category)}:</span> ${s.items.map(esc).join(', ')}</div>`).join('')}` : ''}
 ${r.awards?.length ? `<h2>Awards &amp; Honors</h2>${r.awards.map(a => `<div class="row"><span>${esc(a.name)} — ${esc(a.issuer)}</span><span>${esc(a.year)}</span></div>`).join('')}` : ''}

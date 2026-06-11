@@ -185,6 +185,20 @@ export async function POST(request: NextRequest) {
       output_config: { format: { type: 'json_schema' as const, schema: RESPONSE_SCHEMA } },
       system: `You are an expert resume writer. Given a professional profile and a job description, create a complete, polished, ATS-optimized resume from scratch. Use STAR/CAR/XYZ frameworks for bullet points. Quantify achievements wherever the profile provides data. Tailor everything to the specific job description.
 
+CRITICAL RULE FOR WORK EXPERIENCE — ZERO TOLERANCE FOR BULLET MIXING:
+- Each experience entry MUST have bullets that ONLY describe achievements for THAT specific role at THAT specific company.
+- Do NOT mix, transfer, or reuse bullets between different companies or roles — THIS IS THE MOST IMPORTANT RULE.
+- Every bullet must be specific to the exact title, company, and duration listed in THAT experience entry.
+- If the profile has 3 jobs, output exactly 3 experience entries with bullets unique to each job.
+- SORT EXPERIENCE ENTRIES IN REVERSE CHRONOLOGICAL ORDER (most recent job first). Use the duration field to determine order (e.g., "2023 – Present" comes before "2021 – 2023").
+
+EXPLICIT EXAMPLE OF WHAT IS FORBIDDEN:
+Input has:
+- Job A (Oracle): bullets about "database indexing", "SQL aggregation", "query response time"
+- Job B (Freelance): bullets about "client projects", "React development"
+
+Your output MUST keep "database indexing" bullets under Job A (Oracle). You MUST NOT move them to Job B (Freelance). Each bullet stays with its original company — no exceptions.
+
 Also include:
 - coverLetter: 3–4 paragraphs tailored to the role
 - emailMessage: professional application email with subject line
@@ -192,7 +206,9 @@ Also include:
 - matchWarning: brief warning if matchScore < 60, otherwise ""`,
       messages: [{
         role: 'user',
-        content: `Here is my professional profile:\n\n${profileText}\n\n---\n\nHere is the job description I want to apply for:\n\n${jobDescription}\n\nPlease build a complete tailored resume, cover letter, and application email.`,
+        content: `Here is my professional profile:\n\n${profileText}\n\n---\n\nHere is the job description I want to apply for:\n\n${jobDescription}\n\nPlease build a complete tailored resume, cover letter, and application email.
+
+IMPORTANT: The Work Experience section above lists each job with its own bullet points. In your output, you MUST preserve this exact mapping — each output experience entry must correspond to ONE input job, with bullets rewritten/tailored for that specific role only. Do not move bullets between companies. Do not merge bullets from different jobs. The number of experience entries in your output must match the number of jobs in the input profile.`,
       }],
     })
 

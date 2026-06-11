@@ -12,6 +12,20 @@ import { toast } from 'sonner'
 import { buildResumePrintHTML, printResumeHTML, printCoverLetterHTML, downloadCoverLetterAsWord } from '@/lib/resume-print'
 import type { OptimizeResponse, ContactInfo, ExperienceEntry, ProjectEntry, EducationEntry, AwardEntry, CertificationEntry } from '@/types'
 
+function parseEndDate(duration: string): number {
+  const currentYear = new Date().getFullYear()
+  const parts = duration.split(/[–-]/).map(s => s.trim())
+  const endPart = parts[parts.length - 1] || ''
+  const yearMatch = endPart.match(/\b(19|20)\d{2}\b/)
+  if (yearMatch) return parseInt(yearMatch[0], 10)
+  if (/present|current|now/i.test(endPart)) return currentYear + 1
+  return 0
+}
+
+function sortExperienceReverseChronological(experience: ExperienceEntry[]): ExperienceEntry[] {
+  return [...experience].sort((a, b) => parseEndDate(b.duration) - parseEndDate(a.duration))
+}
+
 interface ResultsPanelProps {
   result: OptimizeResponse
   onResultChange: (r: OptimizeResponse) => void
@@ -39,6 +53,7 @@ function CopyButton({ text }: { text: string }) {
 
 function buildResumeText(d: OptimizeResponse): string {
   const r = d.optimizedResume
+  const sortedExperience = sortExperienceReverseChronological(r.experience ?? [])
   const contactLine = [r.contactInfo.email, r.contactInfo.phone, r.contactInfo.location].filter(Boolean).join(' | ')
   const linkedinText = r.contactInfo.linkedin ? `${r.contactInfo.linkedinLabel || 'LinkedIn'}: ${r.contactInfo.linkedin}` : ''
   const githubText = r.contactInfo.github ? `${r.contactInfo.githubLabel || 'GitHub'}: ${r.contactInfo.github}` : ''
@@ -49,7 +64,7 @@ function buildResumeText(d: OptimizeResponse): string {
     '=== EDUCATION ===',
     ...r.education.map(e => `${e.degree} — ${e.institution}${e.location ? ', ' + e.location : ''}${e.gpa ? ' | GPA: ' + e.gpa : ''} (${e.year})`),
     '', '=== WORK EXPERIENCE ===',
-    ...r.experience.flatMap(exp => [`${exp.title} | ${exp.company}${exp.location ? ' | ' + exp.location : ''} | ${exp.duration}`, ...exp.bullets.map(b => `• ${b}`), '']),
+    ...sortedExperience.flatMap(exp => [`${exp.title} | ${exp.company}${exp.location ? ' | ' + exp.location : ''} | ${exp.duration}`, ...exp.bullets.map(b => `• ${b}`), '']),
     ...(r.projects?.length > 0 ? ['=== PROJECTS ===', ...r.projects.flatMap(p => [`${p.name} | ${p.techStack}${p.duration ? ' | ' + p.duration : ''}`, ...p.bullets.map(b => `• ${b}`), ''])] : []),
     '=== SKILLS ===', ...r.skills.map(s => `${s.category}: ${s.items.join(', ')}`),
     ...(r.awards?.length > 0 ? ['', '=== AWARDS ===', ...r.awards.map(a => `${a.name} — ${a.issuer} (${a.year})`)] : []),
@@ -100,6 +115,7 @@ export default function ResultsPanel({ result, onResultChange }: ResultsPanelPro
   }, [result])
 
   const r = draft.optimizedResume
+  const sortedExperience = sortExperienceReverseChronological(r.experience ?? [])
   const contactLine = [r.contactInfo.email, r.contactInfo.phone, r.contactInfo.location].filter(Boolean).join(' | ')
 
   // --- Updaters ---
@@ -369,11 +385,11 @@ export default function ResultsPanel({ result, onResultChange }: ResultsPanelPro
               )}
 
               {/* Experience */}
-              {r.experience?.length > 0 && (
+              {sortedExperience.length > 0 && (
                 <section>
                   <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-3">Work Experience</h3>
                   <div className="space-y-4">
-                    {r.experience.map((exp, i) => (
+                    {sortedExperience.map((exp, i) => (
                       <div key={i} className={editing ? 'border rounded-lg p-3 space-y-2' : ''}>
                         {editing ? (
                           <>
