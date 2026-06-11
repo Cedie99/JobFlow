@@ -1,5 +1,5 @@
 export const runtime = 'nodejs'
-export const maxDuration = 60
+export const maxDuration = 300
 
 import { NextRequest, NextResponse } from 'next/server'
 import Anthropic from '@anthropic-ai/sdk'
@@ -154,7 +154,7 @@ export async function POST(request: NextRequest) {
     }
 
     const message = await client.messages.create({
-      model: 'claude-3-5-sonnet-latest',
+      model: 'claude-3-opus-20240229',
       max_tokens: 8000,
       thinking: { type: 'enabled', budget_tokens: 2000 },
       output_config: {
