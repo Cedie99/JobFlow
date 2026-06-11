@@ -156,7 +156,7 @@ export async function POST(request: NextRequest) {
     const message = await client.messages.create({
       model: 'claude-3-5-sonnet-latest',
       max_tokens: 8000,
-      thinking: { type: 'adaptive', budget_tokens: 2000 },
+      thinking: { type: 'enabled', budget_tokens: 2000 },
       output_config: {
         format: {
           type: 'json_schema' as const,
