@@ -216,6 +216,30 @@ create trigger update_announcements_updated_at
   before update on announcements
   for each row execute function update_updated_at_column();
 
+-- Interview Questions Table
+create table if not exists interview_questions (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid references auth.users(id) on delete cascade not null,
+  label text not null,
+  job_description text not null,
+  result jsonb not null,
+  created_at timestamptz default now()
+);
+
+alter table interview_questions enable row level security;
+
+create policy "Users can view own interview questions"
+  on interview_questions for select
+  using (auth.uid() = user_id);
+
+create policy "Users can insert own interview questions"
+  on interview_questions for insert
+  with check (auth.uid() = user_id);
+
+create policy "Users can delete own interview questions"
+  on interview_questions for delete
+  using (auth.uid() = user_id);
+
 -- Tracks which users have dismissed which announcements
 create table if not exists dismissed_announcements (
   user_id uuid references auth.users(id) on delete cascade,

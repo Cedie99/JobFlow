@@ -188,6 +188,27 @@ export interface UserFeedback {
   created_at: string
 }
 
+export interface InterviewQuestion {
+  category: string
+  question: string
+  whatTheyLookFor: string
+  sampleAnswer?: string
+}
+
+export interface InterviewQuestionsResponse {
+  jobTitle: string
+  focusAreas: string[]
+  questions: InterviewQuestion[]
+}
+
+export interface SavedInterviewQuestions {
+  id: string
+  label: string
+  job_description: string
+  result: InterviewQuestionsResponse
+  created_at: string
+}
+
 export interface Announcement {
   id: string
   title: string

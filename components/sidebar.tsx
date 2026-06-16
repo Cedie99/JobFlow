@@ -18,6 +18,7 @@ import {
   Zap,
   Shield,
   CreditCard,
+  HelpCircle,
 } from 'lucide-react'
 import { toast } from 'sonner'
 import JobLogo from '@/components/job-logo'
@@ -47,6 +48,12 @@ const navGroups = [
     label: 'Resume Optimizer',
     items: [
       { href: '/resume', label: 'Resume Optimizer', icon: FileText },
+    ],
+  },
+  {
+    label: 'Interview Prep',
+    items: [
+      { href: '/interview-questions', label: 'Question Generator', icon: HelpCircle },
     ],
   },
   {
