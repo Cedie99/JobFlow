@@ -8,22 +8,24 @@ interface StatsCardsProps {
   stats: DashboardStats
 }
 
+const INACTIVE_STATUSES = new Set(['rejected', 'withdrawn', 'ghosted', 'expired', 'accepted'])
+
 export function buildStatsFromApplications(applications: JobApplication[]): DashboardStats {
   const total = applications.length
   const rejected = applications.filter((a) => a.status === 'rejected').length
-  const withdrawn = applications.filter((a) => a.status === 'withdrawn').length
   const interviews = applications.filter((a) => a.status === 'interview').length
   const offers = applications.filter((a) => a.status === 'offer').length
-  const active = total - rejected - withdrawn
+  const accepted = applications.filter((a) => a.status === 'accepted').length
+  const active = applications.filter((a) => !INACTIVE_STATUSES.has(a.status)).length
 
   return {
     total,
     active,
     interviews,
-    offers,
+    offers: offers + accepted,
     rejections: rejected,
     interviewRate: total > 0 ? Math.round((interviews / total) * 100) : 0,
-    offerRate: interviews > 0 ? Math.round((offers / interviews) * 100) : 0,
+    offerRate: interviews > 0 ? Math.round(((offers + accepted) / interviews) * 100) : 0,
   }
 }
 

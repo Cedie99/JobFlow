@@ -5,7 +5,6 @@ import { Button } from '@/components/ui/button'
 import ApplicationTable from '@/components/application-table'
 import ApplicationDialog from '@/components/application-dialog'
 import ConfirmDialog from '@/components/confirm-dialog'
-import StatsCards, { buildStatsFromApplications } from '@/components/stats-cards'
 import { Plus, ClipboardList } from 'lucide-react'
 import { toast } from 'sonner'
 import type { JobApplication } from '@/types'
@@ -101,7 +100,6 @@ export default function TrackerClient({
         </Button>
       </div>
 
-      <StatsCards stats={buildStatsFromApplications(applications)} />
 
       {loading ? (
         <div className="flex items-center justify-center py-20">

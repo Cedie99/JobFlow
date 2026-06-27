@@ -88,7 +88,7 @@ create table if not exists job_applications (
   job_title text,
   job_posting_url text,
   status text default 'applied' check (
-    status in ('applied', 'screening', 'interview', 'offer', 'rejected', 'withdrawn')
+    status in ('applied', 'screening', 'interview', 'offer', 'accepted', 'rejected', 'withdrawn', 'ghosted', 'on_hold', 'expired')
   ),
   applied_date date default current_date,
   notes text,

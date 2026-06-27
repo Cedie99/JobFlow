@@ -5,8 +5,12 @@ export type ApplicationStatus =
   | 'screening'
   | 'interview'
   | 'offer'
+  | 'accepted'
   | 'rejected'
   | 'withdrawn'
+  | 'ghosted'
+  | 'on_hold'
+  | 'expired'
 
 export interface JobApplication {
   id: string

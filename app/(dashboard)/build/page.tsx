@@ -327,7 +327,7 @@ function BuildPageInner() {
                 value={jobDescription}
                 onChange={e => setJobDescription(e.target.value)}
                 placeholder="Paste the full job description here…"
-                className="min-h-[240px] text-sm"
+                className="h-[240px] resize-none overflow-y-auto text-sm"
               />
               {loading && progress > 0 && (
                 <div className="space-y-1.5">

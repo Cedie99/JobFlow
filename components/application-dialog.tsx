@@ -28,7 +28,7 @@ const schema = z.object({
   company_name: z.string().min(1, 'Company name is required'),
   job_title: z.string().optional(),
   job_posting_url: z.string().url('Enter a valid URL').optional().or(z.literal('')),
-  status: z.enum(['applied', 'screening', 'interview', 'offer', 'rejected', 'withdrawn']),
+  status: z.enum(['applied', 'screening', 'interview', 'offer', 'accepted', 'rejected', 'withdrawn', 'ghosted', 'on_hold', 'expired']),
   applied_date: z.string().optional(),
   location: z.string().optional(),
   salary_range: z.string().optional(),
@@ -52,8 +52,12 @@ const STATUS_OPTIONS: { value: JobApplication['status']; label: string }[] = [
   { value: 'screening', label: 'Screening' },
   { value: 'interview', label: 'Interview' },
   { value: 'offer', label: 'Offer' },
+  { value: 'accepted', label: 'Accepted' },
+  { value: 'on_hold', label: 'On Hold' },
   { value: 'rejected', label: 'Rejected' },
+  { value: 'ghosted', label: 'Ghosted' },
   { value: 'withdrawn', label: 'Withdrawn' },
+  { value: 'expired', label: 'Posting Expired' },
 ]
 
 function SectionDivider({ label }: { label: string }) {
@@ -101,7 +105,9 @@ export default function ApplicationDialog({
         notes: application.notes ?? '',
       })
     } else {
-      reset({ status: 'applied', applied_date: new Date().toISOString().split('T')[0] })
+      const d = new Date()
+      const localDate = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+      reset({ status: 'applied', applied_date: localDate })
     }
   }, [application, reset, open])
 

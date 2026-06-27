@@ -1,19 +1,19 @@
-import { startOfDay, subDays, addDays, formatISO } from 'date-fns'
+import { startOfDay, subDays, addDays, formatISO, subWeeks, startOfWeek } from 'date-fns'
 import { createClient } from '@/lib/supabase/server'
 import type { ApplicationStatus, JobApplication } from '@/types'
 import type { SupabaseClient } from '@supabase/supabase-js'
 
-const RECENT_COLUMNS = 'id, company_name, job_title, status, applied_date, job_posting_url'
 const FOLLOW_UP_COLUMNS = 'id, company_name, job_title, status, next_follow_up'
-
-export type DashboardRecentApplication = Pick<
-  JobApplication,
-  'id' | 'company_name' | 'job_title' | 'status' | 'applied_date' | 'job_posting_url'
->
+const STALE_COLUMNS = 'id, company_name, job_title, status'
 
 export type DashboardFollowUp = Pick<
   JobApplication,
   'id' | 'company_name' | 'job_title' | 'status' | 'next_follow_up'
+>
+
+export type DashboardStaleApp = Pick<
+  JobApplication,
+  'id' | 'company_name' | 'job_title' | 'status'
 >
 
 export interface DashboardStats {
@@ -35,9 +35,10 @@ export interface DashboardPipeline {
 export interface DashboardData {
   stats: DashboardStats
   pipeline: DashboardPipeline
-  recentApplications: DashboardRecentApplication[]
   followUps: DashboardFollowUp[]
   allApplications: Pick<JobApplication, 'applied_date'>[]
+  staleApps: DashboardStaleApp[]
+  noFollowUpCount: number
 }
 
 async function countByStatus(
@@ -101,12 +102,7 @@ export async function getDashboardData(userId: string): Promise<DashboardData> {
   const today = startOfDay(new Date())
   const lookback = formatISO(subDays(today, 7), { representation: 'date' })
   const lookAhead = formatISO(addDays(today, 30), { representation: 'date' })
-
-  const recentPromise = supabase
-    .from('job_applications')
-    .select(RECENT_COLUMNS)
-    .order('created_at', { ascending: false })
-    .limit(5)
+  const fourteenDaysAgo = subDays(today, 14).toISOString()
 
   const followUpPromise = supabase
     .from('job_applications')
@@ -122,21 +118,41 @@ export async function getDashboardData(userId: string): Promise<DashboardData> {
     .select('applied_date')
     .order('applied_date', { ascending: true })
 
-  const [{ data: recentData, error: recentError }, { data: followUpData, error: followUpError }, { data: allAppsData, error: allAppsError }, statusCounts] =
-    await Promise.all([
-      recentPromise.eq('user_id', userId),
-      followUpPromise.eq('user_id', userId),
-      allApplicationsPromise.eq('user_id', userId),
-      fetchStatusCounts(supabase, userId),
-    ])
+  const stalePromise = supabase
+    .from('job_applications')
+    .select(STALE_COLUMNS)
+    .in('status', ['applied', 'screening'])
+    .lt('updated_at', fourteenDaysAgo)
+    .order('updated_at', { ascending: true })
+    .limit(5)
 
-  if (recentError) throw recentError
+  const noFollowUpPromise = supabase
+    .from('job_applications')
+    .select('*', { count: 'exact', head: true })
+    .in('status', ['applied', 'screening', 'interview', 'on_hold'])
+    .is('next_follow_up', null)
+
+  const [
+    { data: followUpData, error: followUpError },
+    { data: allAppsData, error: allAppsError },
+    { data: staleData, error: staleError },
+    { count: noFollowUpCount },
+    statusCounts,
+  ] = await Promise.all([
+    followUpPromise.eq('user_id', userId),
+    allApplicationsPromise.eq('user_id', userId),
+    stalePromise.eq('user_id', userId),
+    noFollowUpPromise.eq('user_id', userId),
+    fetchStatusCounts(supabase, userId),
+  ])
+
   if (followUpError) throw followUpError
   if (allAppsError) throw allAppsError
+  if (staleError) throw staleError
 
-  const recentApplications = (recentData ?? []) as DashboardRecentApplication[]
   const followUps = (followUpData ?? []) as DashboardFollowUp[]
   const allApplications = (allAppsData ?? []) as Pick<JobApplication, 'applied_date'>[]
+  const staleApps = (staleData ?? []) as DashboardStaleApp[]
 
   const closed = statusCounts.perStatus.rejected + statusCounts.perStatus.withdrawn
   const active = Math.max(statusCounts.total - closed, 0)
@@ -171,8 +187,9 @@ export async function getDashboardData(userId: string): Promise<DashboardData> {
   return {
     stats,
     pipeline,
-    recentApplications,
     followUps,
     allApplications,
+    staleApps,
+    noFollowUpCount: noFollowUpCount ?? 0,
   }
 }

@@ -1,409 +1,402 @@
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { getUser } from '@/lib/supabase/server'
-import StatsCards from '@/components/stats-cards'
 import DashboardCharts from '@/components/dashboard-charts'
 import { getDashboardData } from '@/lib/dashboard-data'
 import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import {
-  FileText, ClipboardList, Plus, AlertCircle, CheckCircle2,
-  ExternalLink, Bell, Calendar, ArrowRight, Layers, Wand2,
+  ClipboardList, Plus, AlertCircle, CheckCircle2,
+  Bell, TrendingUp, TrendingDown, Minus,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
-import { format, formatDistanceToNowStrict, isBefore, isToday, isTomorrow, addDays, startOfDay, differenceInCalendarDays } from 'date-fns'
-
-const STATUS_BADGE: Record<string, string> = {
-  applied: 'bg-blue-50 text-blue-700 ring-1 ring-blue-200',
-  screening: 'bg-amber-50 text-amber-700 ring-1 ring-amber-200',
-  interview: 'bg-violet-50 text-violet-700 ring-1 ring-violet-200',
-  offer: 'bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200',
-  rejected: 'bg-red-50 text-red-600 ring-1 ring-red-200',
-  withdrawn: 'bg-zinc-100 text-zinc-600 ring-1 ring-zinc-300',
-}
+import {
+  format, isBefore, isToday, isTomorrow,
+  addDays, subDays, startOfDay, startOfWeek,
+  differenceInCalendarDays,
+} from 'date-fns'
 
 const PIPELINE_STAGES = [
-  { key: 'applied',   label: 'Applied',   color: 'bg-blue-500' },
-  { key: 'screening', label: 'Screening', color: 'bg-amber-500' },
-  { key: 'interview', label: 'Interview', color: 'bg-violet-500' },
-  { key: 'offer',     label: 'Offer',     color: 'bg-emerald-500' },
+  { key: 'applied',   label: 'Applied',   color: 'bg-blue-500',    track: 'bg-blue-100' },
+  { key: 'screening', label: 'Screening', color: 'bg-amber-500',   track: 'bg-amber-100' },
+  { key: 'interview', label: 'Interview', color: 'bg-violet-500',  track: 'bg-violet-100' },
+  { key: 'offer',     label: 'Offer',     color: 'bg-emerald-500', track: 'bg-emerald-100' },
 ] as const
+
+const WEEK_DAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
 
 export default async function DashboardPage() {
   const user = await getUser()
   if (!user) redirect('/login')
 
-  const { stats, pipeline, recentApplications, followUps, allApplications } = await getDashboardData(user.id)
+  const { stats, pipeline, followUps, allApplications, staleApps, noFollowUpCount } =
+    await getDashboardData(user.id)
 
   const today = startOfDay(new Date())
-  const inThreeDays = addDays(today, 3)
-
-  const followUpsDue = followUps.filter((a) => {
-    if (!a.next_follow_up) return false
-    const d = new Date(`${a.next_follow_up}T00:00:00`)
-    return d <= inThreeDays
-  })
-
-  const allFollowUps = followUps.slice(0, 7)
-
   const total = stats.total
   const displayName = user.email?.split('@')[0] ?? 'there'
 
+  // Follow-up buckets
+  const overdueFollowUps = followUps.filter((a) =>
+    isBefore(new Date(`${a.next_follow_up}T00:00:00`), today)
+  )
+  const soonFollowUps = followUps.filter((a) => {
+    const d = new Date(`${a.next_follow_up}T00:00:00`)
+    return !isBefore(d, today) && d <= addDays(today, 3)
+  })
+  const allFollowUps = followUps.slice(0, 8)
+
+  // Weekly stats
+  const mondayThisWeek = startOfWeek(today, { weekStartsOn: 1 })
+  const mondayLastWeek = subDays(mondayThisWeek, 7)
+  const sundayLastWeek = subDays(mondayThisWeek, 1)
+
+  const thisWeekCount = (allApplications ?? []).filter((a) => {
+    if (!a.applied_date) return false
+    const d = new Date(a.applied_date + 'T00:00:00')
+    return d >= mondayThisWeek && d <= today
+  }).length
+
+  const lastWeekCount = (allApplications ?? []).filter((a) => {
+    if (!a.applied_date) return false
+    const d = new Date(a.applied_date + 'T00:00:00')
+    return d >= mondayLastWeek && d <= sundayLastWeek
+  }).length
+
+  const dailyCounts = WEEK_DAYS.map((_, i) => {
+    const day = addDays(mondayThisWeek, i)
+    const dayStr = format(day, 'yyyy-MM-dd')
+    return (allApplications ?? []).filter((a) => a.applied_date === dayStr).length
+  })
+  const maxDaily = Math.max(...dailyCounts, 1)
+  const weekDiff = thisWeekCount - lastWeekCount
+
+  const hasActions = overdueFollowUps.length > 0 || staleApps.length > 0 || noFollowUpCount > 0
+
+  const STAT_COLS = [
+    { label: 'Applied',    value: total,             color: 'text-foreground' },
+    { label: 'Active',     value: stats.active,      color: 'text-emerald-600' },
+    { label: 'Interviews', value: stats.interviews,  color: 'text-violet-600' },
+    { label: 'Offers',     value: stats.offers,      color: 'text-amber-600' },
+  ]
+
   return (
-    <div className="p-6">
-      <div className="flex gap-6 items-start">
+    <div className="p-6 space-y-4">
 
-        {/* ── Main column ─────────────────────────────────── */}
-        <div className="flex-1 min-w-0 space-y-6">
-          {/* Header */}
-          <div className="flex items-start justify-between gap-4">
-            <div>
-              <h1 className="text-2xl font-bold">
-                Good {getGreeting()}, {displayName} 👋
-              </h1>
-              <p className="text-muted-foreground text-sm mt-1">
-                {format(new Date(), 'EEEE, MMMM d, yyyy')}
-                {total > 0 && ` · ${total} application${total !== 1 ? 's' : ''} tracked`}
-              </p>
+      {/* ── Header strip ────────────────────────────────────── */}
+      <div className="rounded-2xl border bg-gradient-to-br from-primary/[0.06] via-card to-card px-7 py-5 flex items-center justify-between gap-6 flex-wrap">
+        <div>
+          <h1 className="text-2xl font-bold tracking-tight">
+            Good {getGreeting()}, {displayName} 👋
+          </h1>
+          <p className="text-sm text-muted-foreground mt-0.5">
+            {format(new Date(), 'EEEE, MMMM d, yyyy')}
+          </p>
+        </div>
+
+        {/* Inline stat pills */}
+        <div className="flex items-stretch divide-x rounded-xl border bg-background/80 overflow-hidden shadow-sm">
+          {STAT_COLS.map((s) => (
+            <div key={s.label} className="flex flex-col items-center justify-center px-6 py-3 min-w-[84px]">
+              <span className={cn('text-2xl font-bold tabular-nums leading-none', s.color)}>
+                {s.value}
+              </span>
+              <span className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider mt-1">
+                {s.label}
+              </span>
             </div>
+          ))}
+        </div>
+      </div>
 
+      {/* ── Row: Today's Focus (2/3) + This Week (1/3) ──────── */}
+      <div className="grid grid-cols-3 gap-4">
+
+        {/* Today's Focus */}
+        <div className="col-span-2 rounded-2xl border bg-card flex flex-col">
+          <div className="flex items-center justify-between px-6 pt-5 pb-3">
+            <div className="flex items-center gap-2">
+              {hasActions
+                ? <AlertCircle className="h-4 w-4 text-amber-500 shrink-0" />
+                : <CheckCircle2 className="h-4 w-4 text-emerald-500 shrink-0" />}
+              <span className="text-base font-semibold">Today&apos;s Focus</span>
+            </div>
           </div>
 
-          <StatsCards stats={stats} />
-
-          {/* Charts */}
-          <DashboardCharts 
-            applications={allApplications || []} 
-            pipeline={pipeline} 
-          />
-
-          {/* Follow-up alert banner */}
-          {followUpsDue.length > 0 && (
-            <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 flex items-start gap-3">
-              <AlertCircle className="h-4 w-4 text-amber-600 mt-0.5 shrink-0" />
-              <div className="min-w-0">
-                <p className="text-sm font-medium text-amber-800">
-                  {followUpsDue.length} follow-up{followUpsDue.length !== 1 ? 's' : ''} due within 3 days
-                </p>
-                <div className="flex flex-wrap gap-x-3 gap-y-0.5 mt-1">
-                  {followUpsDue.slice(0, 3).map((a) => {
-                    const d = new Date(`${a.next_follow_up}T00:00:00`)
-                    const overdue = isBefore(d, today)
-                    return (
-                      <span key={a.id} className="text-xs text-amber-700">
-                        {a.company_name}
-                        <span className="text-amber-500 ml-1">
-                          ({overdue ? 'overdue' : format(d, 'MMM d')})
-                        </span>
-                      </span>
-                    )
-                  })}
-                  {followUpsDue.length > 3 && (
-                    <span className="text-xs text-amber-600">+{followUpsDue.length - 3} more</span>
-                  )}
+          <div className="px-6 pb-6 flex-1 space-y-2.5">
+            {total === 0 ? (
+              <div className="flex flex-col items-center justify-center py-10 text-center rounded-xl bg-muted/40">
+                <ClipboardList className="h-7 w-7 text-muted-foreground/40 mb-3" />
+                <p className="text-sm font-medium text-muted-foreground">No applications yet</p>
+                <p className="text-xs text-muted-foreground/60 mt-1 mb-3">Start tracking your job search</p>
+                <Link href="/tracker">
+                  <Button size="sm" variant="outline">
+                    <Plus className="h-3.5 w-3.5 mr-1.5" />
+                    Add your first application
+                  </Button>
+                </Link>
+              </div>
+            ) : !hasActions ? (
+              <div className="flex items-start gap-3 rounded-xl bg-emerald-50 border border-emerald-100 px-4 py-4">
+                <div className="rounded-full bg-emerald-100 p-1.5 shrink-0 mt-0.5">
+                  <CheckCircle2 className="h-4 w-4 text-emerald-600" />
+                </div>
+                <div>
+                  <p className="text-sm font-semibold text-emerald-800">You&apos;re all caught up!</p>
+                  <p className="text-xs text-emerald-700/70 mt-0.5 leading-relaxed">
+                    No overdue follow-ups and all active applications are up to date.
+                    Keep applying to build momentum.
+                  </p>
                 </div>
               </div>
-              <Link href="/tracker" className="ml-auto shrink-0">
-                <Button variant="ghost" size="sm" className="text-amber-700 hover:bg-amber-100 h-7 text-xs px-2">
-                  View all
+            ) : (
+              <>
+                {overdueFollowUps.length > 0 && (
+                  <div className="group flex items-center gap-4 rounded-xl bg-red-50 border border-red-100 px-4 py-3.5">
+                    <span className="h-2.5 w-2.5 rounded-full bg-red-500 shrink-0 animate-pulse" />
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-semibold text-red-800">
+                        {overdueFollowUps.length} overdue follow-up{overdueFollowUps.length !== 1 ? 's' : ''}
+                      </p>
+                      <p className="text-xs text-red-600/70 mt-0.5 truncate">
+                        {overdueFollowUps.slice(0, 3).map((a) => a.company_name).join('  ·  ')}
+                        {overdueFollowUps.length > 3 && `  +${overdueFollowUps.length - 3} more`}
+                      </p>
+                    </div>
+                    <Link href="/tracker">
+                      <Button variant="ghost" size="sm" className="shrink-0 text-red-700 hover:bg-red-100 h-7 text-xs px-2.5">
+                        View →
+                      </Button>
+                    </Link>
+                  </div>
+                )}
+
+                {staleApps.length > 0 && (
+                  <div className="flex items-center gap-4 rounded-xl bg-amber-50 border border-amber-100 px-4 py-3.5">
+                    <span className="h-2.5 w-2.5 rounded-full bg-amber-400 shrink-0" />
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-semibold text-amber-800">
+                        {staleApps.length} application{staleApps.length !== 1 ? 's' : ''} not updated in 2+ weeks
+                      </p>
+                      <p className="text-xs text-amber-700/70 mt-0.5 truncate">
+                        {staleApps.slice(0, 3).map((a) => a.company_name).join('  ·  ')}
+                        {staleApps.length > 3 && `  +${staleApps.length - 3} more`}
+                      </p>
+                    </div>
+                    <Link href="/tracker">
+                      <Button variant="ghost" size="sm" className="shrink-0 text-amber-700 hover:bg-amber-100 h-7 text-xs px-2.5">
+                        Review →
+                      </Button>
+                    </Link>
+                  </div>
+                )}
+
+                {noFollowUpCount > 0 && (
+                  <div className="flex items-center gap-4 rounded-xl bg-blue-50 border border-blue-100 px-4 py-3.5">
+                    <span className="h-2.5 w-2.5 rounded-full bg-blue-400 shrink-0" />
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-semibold text-blue-800">
+                        {noFollowUpCount} active application{noFollowUpCount !== 1 ? 's' : ''} without a follow-up date
+                      </p>
+                      <p className="text-xs text-blue-700/70 mt-0.5">
+                        Set reminders so nothing falls through the cracks
+                      </p>
+                    </div>
+                    <Link href="/tracker">
+                      <Button variant="ghost" size="sm" className="shrink-0 text-blue-700 hover:bg-blue-100 h-7 text-xs px-2.5">
+                        Set dates →
+                      </Button>
+                    </Link>
+                  </div>
+                )}
+
+                {soonFollowUps.length > 0 && overdueFollowUps.length === 0 && (
+                  <p className="text-xs text-muted-foreground pl-1 pt-0.5">
+                    <span className="inline-block h-1.5 w-1.5 rounded-full bg-amber-400 mr-1.5 align-middle" />
+                    {soonFollowUps.length} follow-up{soonFollowUps.length !== 1 ? 's' : ''} due within 3 days
+                  </p>
+                )}
+              </>
+            )}
+          </div>
+        </div>
+
+        {/* This Week */}
+        <div className="rounded-2xl border bg-card px-6 py-5 flex flex-col">
+          <div className="flex items-center justify-between mb-5">
+            <span className="text-base font-semibold">This Week</span>
+            {(weekDiff !== 0 || lastWeekCount > 0) && (
+              <span className={cn(
+                'flex items-center gap-1 text-xs font-medium',
+                weekDiff > 0 ? 'text-emerald-600' : weekDiff < 0 ? 'text-red-500' : 'text-muted-foreground'
+              )}>
+                {weekDiff > 0 ? <TrendingUp className="h-3.5 w-3.5" /> :
+                 weekDiff < 0 ? <TrendingDown className="h-3.5 w-3.5" /> :
+                 <Minus className="h-3.5 w-3.5" />}
+                {weekDiff > 0 ? `+${weekDiff}` : weekDiff}
+              </span>
+            )}
+          </div>
+
+          <div className="mb-1">
+            <span className="text-5xl font-bold tabular-nums leading-none">{thisWeekCount}</span>
+            <p className="text-xs text-muted-foreground mt-1.5">
+              application{thisWeekCount !== 1 ? 's' : ''} applied
+              {lastWeekCount > 0 && (
+                <span className="text-muted-foreground/50"> · {lastWeekCount} last week</span>
+              )}
+            </p>
+          </div>
+
+          {/* Daily bars — pushed to bottom */}
+          <div className="flex items-end gap-1.5 mt-auto pt-5">
+            {WEEK_DAYS.map((day, i) => {
+              const count = dailyCounts[i]
+              const dayDate = addDays(mondayThisWeek, i)
+              const isPast = dayDate <= today
+              const barH = count === 0 ? 3 : Math.max(8, Math.round((count / maxDaily) * 48))
+              return (
+                <div key={day} className="flex flex-col items-center gap-1.5 flex-1">
+                  <div
+                    className={cn(
+                      'w-full rounded-sm transition-all duration-300',
+                      count > 0
+                        ? 'bg-primary'
+                        : isPast
+                          ? 'bg-muted-foreground/15'
+                          : 'bg-muted/30'
+                    )}
+                    style={{ height: `${barH}px` }}
+                  />
+                  <span className="text-[9px] font-medium text-muted-foreground/50 leading-none">
+                    {day[0]}
+                  </span>
+                </div>
+              )
+            })}
+          </div>
+        </div>
+      </div>
+
+      {/* ── Row: Activity chart (1/2) + Follow-ups (1/2) ────── */}
+      <div className="grid grid-cols-2 gap-4">
+        <DashboardCharts applications={allApplications || []} />
+
+        {/* Follow-ups */}
+        <div className="rounded-2xl border bg-card px-6 py-5">
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-2">
+              <Bell className="h-4 w-4 text-muted-foreground" />
+              <span className="text-base font-semibold">Follow-ups</span>
+            </div>
+            {allFollowUps.length > 0 && (
+              <Link href="/tracker">
+                <Button variant="ghost" size="sm" className="text-[10px] text-muted-foreground hover:text-primary h-6 px-2 -mr-1">
+                  See all
                 </Button>
               </Link>
+            )}
+          </div>
+
+          {allFollowUps.length > 0 ? (
+            <div className="space-y-2.5">
+              {allFollowUps.map((app) => {
+                const d = new Date(`${app.next_follow_up}T00:00:00`)
+                const overdue = isBefore(d, today)
+                const dueToday = isToday(d)
+                const dueTomorrow = isTomorrow(d)
+                const daysOut = differenceInCalendarDays(d, today)
+
+                const dot = overdue ? 'bg-red-500' : (dueToday || dueTomorrow) ? 'bg-amber-400' : 'bg-primary/30'
+                const label = overdue ? 'Overdue' : dueToday ? 'Today' : dueTomorrow ? 'Tomorrow' : `In ${daysOut}d`
+                const labelCls = overdue ? 'text-red-600' : (dueToday || dueTomorrow) ? 'text-amber-600' : 'text-muted-foreground'
+
+                return (
+                  <div key={app.id} className="flex items-start gap-2.5">
+                    <div className={cn('mt-1.5 h-1.5 w-1.5 rounded-full shrink-0', dot)} />
+                    <div className="flex-1 min-w-0">
+                      <p className="text-xs font-medium truncate">{app.company_name}</p>
+                      {app.job_title && (
+                        <p className="text-[10px] text-muted-foreground truncate">{app.job_title}</p>
+                      )}
+                    </div>
+                    <div className="text-right shrink-0">
+                      <p className={cn('text-[10px] font-semibold', labelCls)}>{label}</p>
+                      <p className="text-[10px] text-muted-foreground/50">{format(d, 'MMM d')}</p>
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+          ) : (
+            <div className="flex flex-col items-center justify-center py-8 rounded-xl bg-muted/30">
+              <Bell className="h-5 w-5 text-muted-foreground/30 mb-2" />
+              <p className="text-xs font-medium text-muted-foreground">No follow-ups scheduled</p>
+              <p className="text-[10px] text-muted-foreground/50 mt-0.5">
+                Set follow-up dates in your applications
+              </p>
             </div>
           )}
-
-          <div className="grid gap-4 md:grid-cols-2">
-            {/* Recent Applications */}
-            <Card className="hover:shadow-sm transition-shadow duration-200">
-              <CardHeader className="flex flex-row items-center justify-between pb-3">
-                <CardTitle className="text-base">Recent Applications</CardTitle>
-                <Link href="/tracker">
-                  <Button variant="ghost" size="sm" className="text-xs text-muted-foreground hover:text-primary -mr-2">
-                    View all
-                  </Button>
-                </Link>
-              </CardHeader>
-              <CardContent>
-                {recentApplications && recentApplications.length > 0 ? (
-                  <div className="space-y-2">
-                    {recentApplications.map((app) => (
-                      <div
-                        key={app.id}
-                        className="group flex items-center justify-between gap-3 rounded-lg px-2 py-2 hover:bg-muted/50 transition-colors -mx-2 cursor-default"
-                      >
-                        <div className="min-w-0">
-                          <div className="flex items-center gap-1.5">
-                            <p className="text-sm font-medium truncate">{app.company_name}</p>
-                            {app.job_posting_url && (
-                              <a
-                                href={app.job_posting_url}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground hover:text-primary"
-                              >
-                                <ExternalLink className="h-3 w-3" />
-                              </a>
-                            )}
-                          </div>
-                          <p className="text-xs text-muted-foreground">
-                            {app.job_title ?? 'No title'}
-                            {app.applied_date && (
-                              <span className="ml-1.5 opacity-60">
-                                · {formatDistanceToNowStrict(new Date(app.applied_date + 'T00:00:00'), { addSuffix: true })}
-                              </span>
-                            )}
-                          </p>
-                        </div>
-                        <span className={cn(
-                          'inline-flex shrink-0 items-center px-2 py-0.5 rounded-full text-xs font-medium capitalize',
-                          STATUS_BADGE[app.status]
-                        )}>
-                          {app.status}
-                        </span>
-                      </div>
-                    ))}
-                  </div>
-                ) : (
-                  <div className="text-center py-10 text-muted-foreground">
-                    <div className="rounded-full bg-muted p-4 w-fit mx-auto mb-3">
-                      <ClipboardList className="h-6 w-6 opacity-40" />
-                    </div>
-                    <p className="text-sm font-medium">No applications yet</p>
-                    <p className="text-xs mt-1 mb-3">Start tracking your job search</p>
-                    <Link href="/tracker">
-                      <Button variant="outline" size="sm" className="hover:border-primary/40 hover:text-primary">
-                        <Plus className="h-3.5 w-3.5 mr-1.5" />
-                        Add your first one
-                      </Button>
-                    </Link>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-
-            {/* Pipeline */}
-            <Card className="hover:shadow-sm transition-shadow duration-200">
-              <CardHeader className="flex flex-row items-center justify-between pb-3">
-                <CardTitle className="text-base">Pipeline</CardTitle>
-                {total > 0 && (
-                  <span className="text-xs text-muted-foreground font-normal">{total} total</span>
-                )}
-              </CardHeader>
-              <CardContent>
-                {total > 0 ? (
-                  <div className="space-y-4">
-                    {PIPELINE_STAGES.map(({ key, label, color }) => {
-                      const count = pipeline.stages[key] ?? 0
-                      const pct = Math.round((count / total) * 100)
-                      return (
-                        <div key={key}>
-                          <div className="flex items-center justify-between mb-1.5">
-                            <span className="text-sm text-muted-foreground">{label}</span>
-                            <div className="flex items-center gap-2">
-                              <span className="text-xs text-muted-foreground/60">{pct}%</span>
-                              <span className="text-sm font-semibold tabular-nums w-5 text-right">{count}</span>
-                            </div>
-                          </div>
-                          <div className="h-2 bg-muted rounded-full overflow-hidden">
-                            <div
-                              className={cn('h-full rounded-full transition-all duration-700', color)}
-                              style={{ width: pct > 0 ? `${Math.max(pct, 2)}%` : '0%' }}
-                            />
-                          </div>
-                        </div>
-                      )
-                    })}
-                    {pipeline.closed > 0 && (
-                      <div className="pt-1 border-t">
-                        <div className="flex items-center justify-between">
-                          <span className="text-xs text-muted-foreground/60">Closed (rejected / withdrawn)</span>
-                          <div className="flex items-center gap-2">
-                            <span className="text-xs text-muted-foreground/40">
-                              {Math.round((pipeline.closed / total) * 100)}%
-                            </span>
-                            <span className="text-xs font-medium text-muted-foreground tabular-nums w-5 text-right">
-                              {pipeline.closed}
-                            </span>
-                          </div>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                ) : (
-                  <div className="text-center py-10 text-muted-foreground">
-                    <div className="rounded-full bg-muted p-4 w-fit mx-auto mb-3">
-                      <CheckCircle2 className="h-6 w-6 opacity-40" />
-                    </div>
-                    <p className="text-sm font-medium">Pipeline is empty</p>
-                    <p className="text-xs mt-1 mb-3">Track applications to see your funnel</p>
-                    <Link href="/tracker">
-                      <Button variant="outline" size="sm" className="hover:border-primary/40 hover:text-primary">
-                        Get started
-                      </Button>
-                    </Link>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          </div>
         </div>
-
-        {/* ── Right panel ─────────────────────────────────── */}
-        <div className="w-72 shrink-0 space-y-4 sticky top-6">
-
-          {/* Quick Actions */}
-          <Card>
-            <CardHeader className="pb-3">
-              <CardTitle className="text-sm font-semibold">Quick Actions</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-2">
-              {/* AI Resume Builder — shown as a connected pair */}
-              <div className="rounded-lg border border-primary/15 bg-primary/[0.02] overflow-hidden">
-                <p className="px-3 pt-2 pb-1 text-[9px] font-semibold uppercase tracking-widest text-primary/50 select-none">
-                  AI Resume Builder
-                </p>
-                <Link href="/profiles" className="block">
-                  <div className="flex items-center gap-3 px-3 py-2 hover:bg-primary/[0.06] transition-colors group cursor-pointer border-t border-primary/10">
-                    <div className="rounded-md bg-primary/10 p-1.5 shrink-0">
-                      <Layers className="h-3.5 w-3.5 text-primary" />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-xs font-medium">Career Profiles</p>
-                      <p className="text-[10px] text-muted-foreground">AI interview for each career path</p>
-                    </div>
-                    <ArrowRight className="h-3.5 w-3.5 text-primary/30 group-hover:text-primary group-hover:translate-x-0.5 transition-all" />
-                  </div>
-                </Link>
-                <Link href="/build" className="block">
-                  <div className="flex items-center gap-3 px-3 py-2 hover:bg-primary/[0.06] transition-colors group cursor-pointer border-t border-primary/10">
-                    <div className="rounded-md bg-primary/10 p-1.5 shrink-0">
-                      <Wand2 className="h-3.5 w-3.5 text-primary" />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-xs font-medium">Build Resume</p>
-                      <p className="text-[10px] text-muted-foreground">Paste job → tailored resume</p>
-                    </div>
-                    <ArrowRight className="h-3.5 w-3.5 text-primary/30 group-hover:text-primary group-hover:translate-x-0.5 transition-all" />
-                  </div>
-                </Link>
-              </div>
-
-              <Link href="/resume" className="block">
-                <div className="flex items-center gap-3 rounded-lg border border-border px-3 py-2.5 hover:border-primary/30 hover:bg-primary/[0.03] transition-all group cursor-pointer">
-                  <div className="rounded-md bg-primary/10 p-1.5 shrink-0">
-                    <FileText className="h-3.5 w-3.5 text-primary" />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-xs font-medium">Optimize Resume</p>
-                    <p className="text-[10px] text-muted-foreground">Tailor it with AI</p>
-                  </div>
-                  <ArrowRight className="h-3.5 w-3.5 text-muted-foreground/40 group-hover:text-primary group-hover:translate-x-0.5 transition-all" />
-                </div>
-              </Link>
-              <Link href="/tracker" className="block">
-                <div className="flex items-center gap-3 rounded-lg border border-border px-3 py-2.5 hover:border-primary/30 hover:bg-primary/[0.03] transition-all group cursor-pointer">
-                  <div className="rounded-md bg-primary/10 p-1.5 shrink-0">
-                    <Plus className="h-3.5 w-3.5 text-primary" />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-xs font-medium">Add Application</p>
-                    <p className="text-[10px] text-muted-foreground">Log a new job</p>
-                  </div>
-                  <ArrowRight className="h-3.5 w-3.5 text-muted-foreground/40 group-hover:text-primary group-hover:translate-x-0.5 transition-all" />
-                </div>
-              </Link>
-            </CardContent>
-          </Card>
-
-          {/* Upcoming Follow-ups */}
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between pb-3">
-              <CardTitle className="text-sm font-semibold">Follow-ups</CardTitle>
-              {allFollowUps.length > 0 && (
-                <Link href="/tracker">
-                  <Button variant="ghost" size="sm" className="text-[10px] text-muted-foreground hover:text-primary h-6 px-2 -mr-1">
-                    See all
-                  </Button>
-                </Link>
-              )}
-            </CardHeader>
-            <CardContent>
-              {allFollowUps.length > 0 ? (
-                <div className="space-y-2">
-                  {allFollowUps.map((app) => {
-                    const d = new Date(`${app.next_follow_up}T00:00:00`)
-                    const overdue = isBefore(d, today)
-                    const dueToday = isToday(d)
-                    const dueTomorrow = isTomorrow(d)
-                    const daysOut = differenceInCalendarDays(d, today)
-
-                    const urgencyDot = overdue
-                      ? 'bg-red-500'
-                      : dueToday || dueTomorrow
-                        ? 'bg-amber-400'
-                        : 'bg-primary/40'
-
-                    const dateLabel = overdue
-                      ? 'Overdue'
-                      : dueToday
-                        ? 'Today'
-                        : dueTomorrow
-                          ? 'Tomorrow'
-                          : `In ${daysOut}d`
-
-                    const dateLabelColor = overdue
-                      ? 'text-red-600'
-                      : dueToday || dueTomorrow
-                        ? 'text-amber-600'
-                        : 'text-muted-foreground'
-
-                    return (
-                      <div key={app.id} className="flex items-start gap-2.5">
-                        <div className={cn('mt-1.5 h-1.5 w-1.5 rounded-full shrink-0', urgencyDot)} />
-                        <div className="flex-1 min-w-0">
-                          <p className="text-xs font-medium truncate">{app.company_name}</p>
-                          {app.job_title && (
-                            <p className="text-[10px] text-muted-foreground truncate">{app.job_title}</p>
-                          )}
-                        </div>
-                        <div className="text-right shrink-0">
-                          <p className={cn('text-[10px] font-medium', dateLabelColor)}>{dateLabel}</p>
-                          <p className="text-[10px] text-muted-foreground/50">{format(d, 'MMM d')}</p>
-                        </div>
-                      </div>
-                    )
-                  })}
-                </div>
-              ) : (
-                <div className="text-center py-6">
-                  <div className="rounded-full bg-muted p-3 w-fit mx-auto mb-2">
-                    <Bell className="h-4 w-4 text-muted-foreground/40" />
-                  </div>
-                  <p className="text-xs font-medium text-muted-foreground">No follow-ups scheduled</p>
-                  <p className="text-[10px] text-muted-foreground/60 mt-0.5">
-                    Set follow-up dates in your applications
-                  </p>
-                </div>
-              )}
-            </CardContent>
-          </Card>
-
-          {/* Job search tip */}
-          <Card className="border-primary/20 bg-primary/[0.02]">
-            <CardContent className="pt-4 pb-4">
-              <div className="flex gap-2.5">
-                <Calendar className="h-4 w-4 text-primary shrink-0 mt-0.5" />
-                <div>
-                  <p className="text-xs font-medium text-primary">Pro tip</p>
-                  <p className="text-[11px] text-muted-foreground mt-0.5 leading-relaxed">
-                    Follow up within 5–7 days of applying. A short, polite email can set you apart from other candidates.
-                  </p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-
       </div>
+
+      {/* ── Pipeline ────────────────────────────────────────── */}
+      <div className="rounded-2xl border bg-card px-6 py-5">
+        <div className="flex items-center justify-between mb-5">
+          <span className="text-base font-semibold">Pipeline</span>
+          {total > 0 && (
+            <span className="text-xs text-muted-foreground">{total} total</span>
+          )}
+        </div>
+
+        {total > 0 ? (
+          <div className="grid grid-cols-4 gap-6">
+            {PIPELINE_STAGES.map(({ key, label, color, track }) => {
+              const count = pipeline.stages[key] ?? 0
+              const pct = Math.round((count / total) * 100)
+              return (
+                <div key={key}>
+                  <div className="flex items-end justify-between mb-2">
+                    <span className="text-xs font-medium text-muted-foreground">{label}</span>
+                    <span className="text-lg font-bold tabular-nums leading-none">{count}</span>
+                  </div>
+                  <div className={cn('h-1.5 rounded-full overflow-hidden', track)}>
+                    <div
+                      className={cn('h-full rounded-full transition-all duration-700', color)}
+                      style={{ width: pct > 0 ? `${Math.max(pct, 3)}%` : '0%' }}
+                    />
+                  </div>
+                  <p className="text-[10px] text-muted-foreground/50 mt-1">{pct}%</p>
+                </div>
+              )
+            })}
+          </div>
+        ) : (
+          <div className="flex flex-col items-center justify-center py-10 rounded-xl bg-muted/30">
+            <ClipboardList className="h-6 w-6 text-muted-foreground/30 mb-2" />
+            <p className="text-sm font-medium text-muted-foreground">Pipeline is empty</p>
+            <p className="text-xs text-muted-foreground/60 mt-1 mb-3">Track applications to see your funnel</p>
+            <Link href="/tracker">
+              <Button variant="outline" size="sm">
+                <Plus className="h-3.5 w-3.5 mr-1.5" />
+                Get started
+              </Button>
+            </Link>
+          </div>
+        )}
+
+        {pipeline.closed > 0 && total > 0 && (
+          <div className="flex items-center justify-between mt-4 pt-4 border-t">
+            <span className="text-xs text-muted-foreground/60">Closed (rejected · withdrawn · ghosted · expired)</span>
+            <div className="flex items-center gap-2">
+              <span className="text-xs text-muted-foreground/40">
+                {Math.round((pipeline.closed / total) * 100)}%
+              </span>
+              <span className="text-sm font-semibold tabular-nums">{pipeline.closed}</span>
+            </div>
+          </div>
+        )}
+      </div>
+
     </div>
   )
 }

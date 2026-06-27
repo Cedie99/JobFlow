@@ -217,7 +217,7 @@ export default function InterviewQuestionsPage() {
                   placeholder="Paste job description here..."
                   value={jobDescription}
                   onChange={(e) => setJobDescription(e.target.value)}
-                  className="flex-1 min-h-[300px] resize-none"
+                  className="h-[520px] resize-none overflow-y-auto"
                 />
                 <Button onClick={handleGenerate} disabled={loading} className="w-full gap-2">
                   {loading ? (
@@ -424,15 +424,6 @@ export default function InterviewQuestionsPage() {
                           </CardDescription>
                         </div>
                         <div className="flex items-center gap-2">
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={() => setViewMode('browse')}
-                            className="gap-1.5 text-xs h-8"
-                          >
-                            <ListChecks className="h-3.5 w-3.5" />
-                            Browse
-                          </Button>
                           <Button
                             size="sm"
                             variant="outline"
