@@ -71,14 +71,18 @@ type StatusCounts = {
 }
 
 async function fetchStatusCounts(supabase: SupabaseClient, userId: string): Promise<StatusCounts> {
-  const [total, applied, screening, interview, offer, rejected, withdrawn] = await Promise.all([
+  const [total, applied, screening, interview, offer, accepted, rejected, withdrawn, ghosted, on_hold, expired] = await Promise.all([
     countByStatus(supabase, userId),
     countByStatus(supabase, userId, 'applied'),
     countByStatus(supabase, userId, 'screening'),
     countByStatus(supabase, userId, 'interview'),
     countByStatus(supabase, userId, 'offer'),
+    countByStatus(supabase, userId, 'accepted'),
     countByStatus(supabase, userId, 'rejected'),
     countByStatus(supabase, userId, 'withdrawn'),
+    countByStatus(supabase, userId, 'ghosted'),
+    countByStatus(supabase, userId, 'on_hold'),
+    countByStatus(supabase, userId, 'expired'),
   ])
 
   return {
@@ -88,8 +92,12 @@ async function fetchStatusCounts(supabase: SupabaseClient, userId: string): Prom
       screening,
       interview,
       offer,
+      accepted,
       rejected,
       withdrawn,
+      ghosted,
+      on_hold,
+      expired,
     },
   }
 }
@@ -154,7 +162,11 @@ export async function getDashboardData(userId: string): Promise<DashboardData> {
   const allApplications = (allAppsData ?? []) as Pick<JobApplication, 'applied_date'>[]
   const staleApps = (staleData ?? []) as DashboardStaleApp[]
 
-  const closed = statusCounts.perStatus.rejected + statusCounts.perStatus.withdrawn
+  const closed =
+    statusCounts.perStatus.rejected +
+    statusCounts.perStatus.withdrawn +
+    statusCounts.perStatus.ghosted +
+    statusCounts.perStatus.expired
   const active = Math.max(statusCounts.total - closed, 0)
 
   const stats: DashboardStats = {
