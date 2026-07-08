@@ -30,23 +30,28 @@ export default function ResumePage() {
   }
 
   return (
-    <div className="flex h-full overflow-hidden">
-
-      {/* ── Main content ─────────────────────────────────── */}
-      <div className="flex-1 overflow-y-auto">
-        <div className="p-6 flex flex-col min-h-full">
+    <div className="h-full overflow-y-auto lg:overflow-hidden">
+      <div className="lg:h-full">
+        <div className="p-4 sm:p-6 flex flex-col min-h-full lg:h-full">
 
           {/* Header */}
-          <div className="mb-6 shrink-0">
-            <h1 className="text-2xl font-bold">Rewrite your resume base on the job you're applying for</h1>
-            <p className="text-muted-foreground text-sm">
-              Upload your resume and paste a job description. Claude will tailor your resume using STAR, CAR, and XYZ frameworks, then generate a cover letter and email.
-            </p>
+          <div className="mb-6 shrink-0 flex items-start justify-between gap-4 flex-wrap">
+            <div>
+              <h1 className="text-2xl font-bold">Rewrite your resume base on the job you're applying for</h1>
+              <p className="text-muted-foreground text-sm">
+                Upload your resume and paste a job description. Claude will tailor your resume using STAR, CAR, and XYZ frameworks, then generate a cover letter and email.
+              </p>
+            </div>
+            <OptimizationHistory
+              onLoad={handleLoadFromHistory}
+              activeId={result?.savedId ?? null}
+              refreshTrigger={historyRevision}
+            />
           </div>
 
           {/* Input + Results grid */}
-          <div className="grid gap-8 flex-1 min-h-0 grid-cols-1 lg:grid-cols-[1fr_1.2fr]">
-            <Card className="overflow-y-auto w-full">
+          <div className="grid gap-6 lg:gap-8 grid-cols-1 lg:grid-cols-[1fr_1.2fr] lg:flex-1 lg:min-h-0">
+            <Card className="lg:overflow-y-auto w-full">
               <CardHeader>
                 <CardTitle className="text-base">Input</CardTitle>
                 <CardDescription className="text-xs">
@@ -63,7 +68,7 @@ export default function ResumePage() {
             </Card>
 
             {result ? (
-              <Card className="flex flex-col overflow-hidden">
+              <Card className="flex flex-col overflow-hidden h-[80vh] lg:h-auto">
                 <CardHeader className="shrink-0">
                   <CardTitle className="text-base">Tailored Resume</CardTitle>
                   <CardDescription className="text-xs">
@@ -75,7 +80,7 @@ export default function ResumePage() {
                 </CardContent>
               </Card>
             ) : (
-              <Card className="flex flex-col overflow-hidden">
+              <Card className="flex flex-col overflow-hidden min-h-[45vh] lg:min-h-0">
                 <CardHeader className="shrink-0">
                   <CardTitle className="text-base">Tailored Resume</CardTitle>
                   <CardDescription className="text-xs">
@@ -102,16 +107,9 @@ export default function ResumePage() {
         </div>
       </div>
 
-      {/* ── History sidebar ───────────────────────────────── */}
-      <OptimizationHistory
-        onLoad={handleLoadFromHistory}
-        activeId={result?.savedId ?? null}
-        refreshTrigger={historyRevision}
-      />
-
       {/* ── History load modal ────────────────────────────── */}
       <Dialog open={!!modal} onOpenChange={(open) => { if (!open) setModal(null) }}>
-        <DialogContent showCloseButton={false} className="sm:max-w-3xl w-full h-[90vh] flex flex-col gap-0 p-0 overflow-hidden">
+        <DialogContent showCloseButton={false} className="sm:max-w-3xl w-full h-[92dvh] sm:h-[90vh] flex flex-col gap-0 p-0 overflow-hidden">
           {/* Modal header */}
           <div className="flex items-center gap-3 px-5 py-4 border-b border-border shrink-0">
             <div className="rounded-lg bg-primary/10 p-1.5">

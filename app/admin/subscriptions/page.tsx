@@ -18,7 +18,7 @@ function fmt(date: string | null | undefined) {
 
 const STATUS_STYLES: Record<SubscriptionStatus, string> = {
   active: 'bg-green-500/10 text-green-600 border-green-500/20 dark:text-green-400',
-  on_trial: 'bg-blue-500/10 text-blue-600 border-blue-500/20 dark:text-blue-400',
+  on_trial: 'bg-teal-500/10 text-teal-600 border-teal-500/20 dark:text-teal-400',
   paused: 'bg-amber-500/10 text-amber-600 border-amber-500/20',
   cancelled: 'bg-muted text-muted-foreground',
   expired: 'bg-muted text-muted-foreground',

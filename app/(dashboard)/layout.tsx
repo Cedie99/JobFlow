@@ -20,7 +20,7 @@ export default async function DashboardLayout({
     <div className="flex h-screen overflow-hidden">
       <Sidebar userEmail={user.email ?? ''} isAdmin={isAdminEmail(user.email)} />
       <div className="flex-1 flex flex-col overflow-hidden">
-        <DashboardHeader userEmail={user.email ?? ''} />
+        <DashboardHeader userEmail={user.email ?? ''} isAdmin={isAdminEmail(user.email)} />
         <main className="flex-1 overflow-y-auto bg-muted/30">
           <AnnouncementsBanner />
           {children}

@@ -86,62 +86,54 @@ export default function SignupPage() {
   }
 
   return (
-    <div className="min-h-screen flex">
+    <div className="min-h-screen bg-gradient-to-br from-secondary/70 via-background to-secondary/40 flex items-center justify-center p-4 sm:p-8">
+      <div className="w-full max-w-4xl grid lg:grid-cols-2 rounded-3xl overflow-hidden shadow-2xl ring-1 ring-foreground/5 bg-card">
 
-      {/* ── Left brand panel ─────────────────────────────── */}
-      <div
-        className="hidden lg:flex lg:w-[46%] flex-col justify-between p-12 bg-primary relative overflow-hidden"
-        style={{
-          backgroundImage: 'radial-gradient(circle at 1px 1px, rgba(255,255,255,0.07) 1px, transparent 0)',
-          backgroundSize: '28px 28px',
-        }}
-      >
-        <div className="absolute top-[-80px] right-[-80px] h-72 w-72 rounded-full bg-white/5 blur-3xl pointer-events-none" />
-        <div className="absolute bottom-[-60px] left-[-60px] h-56 w-56 rounded-full bg-white/5 blur-3xl pointer-events-none" />
+        {/* ── Left brand panel ─────────────────────────────── */}
+        <div className="relative hidden lg:flex flex-col p-10 bg-gradient-to-br from-emerald-950 via-emerald-900 to-emerald-800 text-white overflow-hidden">
+          <div className="pointer-events-none absolute -top-24 -right-24 h-72 w-72 rounded-full bg-emerald-500/15 blur-3xl" />
+          <div className="pointer-events-none absolute -bottom-28 -left-20 h-64 w-64 rounded-full bg-emerald-400/10 blur-3xl" />
 
-        <JobLogo size="lg" light />
-
-        <div className="space-y-8">
-          <div>
-            <h2 className="text-3xl font-bold text-white leading-tight">
-              Land your next job<br />faster with AI
-            </h2>
-            <p className="text-white/60 mt-3 text-sm leading-relaxed">
-              Create your free account and let jobflow handle the tedious parts of your job search.
-            </p>
+          <div className="relative">
+            <JobLogo size="md" light />
           </div>
 
-          <div className="space-y-5">
-            {FEATURES.map(({ icon: Icon, title, desc }) => (
+          <div className="relative mt-14">
+            <h2 className="text-3xl font-bold leading-tight tracking-tight">
+              Land your next job<br />faster with AI.
+            </h2>
+          </div>
+
+          <div className="relative mt-10 space-y-7">
+            {FEATURES.map(({ title, desc }) => (
               <div key={title} className="flex gap-3.5 items-start">
-                <div className="shrink-0 h-8 w-8 rounded-lg bg-white/10 flex items-center justify-center mt-0.5">
-                  <Icon className="h-4 w-4 text-white" />
-                </div>
+                <span className="shrink-0 h-5 w-5 rounded-full bg-emerald-500 flex items-center justify-center mt-0.5">
+                  <Check className="h-3 w-3 text-white" strokeWidth={3} />
+                </span>
                 <div>
-                  <p className="text-sm font-semibold text-white">{title}</p>
-                  <p className="text-xs text-white/55 mt-0.5 leading-relaxed">{desc}</p>
+                  <p className="text-sm font-semibold">{title}</p>
+                  <p className="text-xs text-white/60 mt-0.5 leading-relaxed">{desc}</p>
                 </div>
               </div>
             ))}
           </div>
+
+          <p className="relative mt-auto pt-10 text-white/30 text-xs">
+            &copy; {new Date().getFullYear()} AngatCV
+          </p>
         </div>
 
-        <p className="text-white/30 text-xs">
-          &copy; {new Date().getFullYear()} jobflow
-        </p>
-      </div>
+        {/* ── Right form panel ─────────────────────────────── */}
+        <div className="bg-card p-6 sm:p-10 lg:p-12 flex flex-col justify-center">
+          <div className="lg:hidden mb-8">
+            <JobLogo size="md" />
+          </div>
 
-      {/* ── Right form panel ─────────────────────────────── */}
-      <div className="flex-1 flex flex-col items-center justify-center bg-background p-6 lg:p-12">
-        <div className="lg:hidden mb-8">
-          <JobLogo size="md" />
-        </div>
-
-        <div className="w-full max-w-sm space-y-8">
+          <div className="w-full max-w-sm mx-auto space-y-7">
           {/* Heading */}
           <div>
-            <h1 className="text-2xl font-bold tracking-tight">Create your account</h1>
-            <p className="text-muted-foreground text-sm mt-1">
+            <h1 className="text-3xl font-bold tracking-tight">Create your account</h1>
+            <p className="text-muted-foreground text-sm mt-1.5">
               Free forever — no credit card required
             </p>
           </div>
@@ -256,18 +248,13 @@ export default function SignupPage() {
             </p>
           </form>
 
-          {/* Divider */}
-          <div className="flex items-center gap-3">
-            <div className="h-px flex-1 bg-border" />
-            <span className="text-xs text-muted-foreground">Already have an account?</span>
-            <div className="h-px flex-1 bg-border" />
+            <p className="text-sm text-muted-foreground">
+              Already have an account?{' '}
+              <Link href="/login" className="font-semibold text-primary hover:underline">
+                Sign in instead
+              </Link>
+            </p>
           </div>
-
-          <Link href="/login">
-            <Button variant="outline" className="w-full" size="lg">
-              Sign in instead
-            </Button>
-          </Link>
         </div>
       </div>
     </div>

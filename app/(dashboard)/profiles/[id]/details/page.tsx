@@ -594,7 +594,7 @@ export default function ProfileDetailsPage() {
             icon={Briefcase}
             title="Experience"
             count={data.experience?.length}
-            accent="border-l-blue-500"
+            accent="border-l-teal-600"
           >
             {editing ? (
               <div className="space-y-4">
@@ -938,7 +938,7 @@ export default function ProfileDetailsPage() {
             </SectionCard>
 
             {/* Certifications */}
-            <SectionCard icon={ShieldCheck} title="Certifications" count={data.certifications?.length} accent="border-l-blue-500">
+            <SectionCard icon={ShieldCheck} title="Certifications" count={data.certifications?.length} accent="border-l-teal-600">
               {editing ? (
                 <div className="space-y-3">
                   {draft?.certifications?.map((cert, i) => (
@@ -965,8 +965,8 @@ export default function ProfileDetailsPage() {
                 <div className="space-y-3">
                   {data.certifications?.map((cert, i) => (
                     <div key={i} className="flex items-center gap-3 p-2.5 rounded-xl hover:bg-muted/30 transition-colors">
-                      <div className="h-8 w-8 rounded-xl bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center shrink-0">
-                        <ShieldCheck className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+                      <div className="h-8 w-8 rounded-xl bg-teal-100 dark:bg-teal-900/30 flex items-center justify-center shrink-0">
+                        <ShieldCheck className="h-4 w-4 text-teal-600 dark:text-teal-400" />
                       </div>
                       <div className="min-w-0">
                         <p className="text-sm font-medium">{cert.name}</p>

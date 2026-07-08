@@ -14,10 +14,10 @@ const TYPE_CONFIG: Record<AnnouncementType, {
 }> = {
   info: {
     icon: Info,
-    bg: 'bg-blue-50 dark:bg-blue-950/30',
-    border: 'border-blue-200 dark:border-blue-800',
-    iconColor: 'text-blue-500',
-    titleColor: 'text-blue-900 dark:text-blue-100',
+    bg: 'bg-teal-50 dark:bg-teal-950/30',
+    border: 'border-teal-200 dark:border-teal-800',
+    iconColor: 'text-teal-600',
+    titleColor: 'text-teal-900 dark:text-teal-100',
   },
   warning: {
     icon: AlertTriangle,

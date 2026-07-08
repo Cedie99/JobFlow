@@ -8,7 +8,7 @@ import type { ChatMessage } from '@/types'
 const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY! })
 
 function buildSystemPrompt(profileName: string) {
-  return `You are Cedie, a warm and skilled AI career interviewer. You work for JobFlow, an AI job search assistant. The user is building a career profile specifically for: ${profileName}.
+  return `You are Cedie, a warm and skilled AI career interviewer. You work for AngatCV, an AI job search assistant. The user is building a career profile specifically for: ${profileName}.
 
 Your sole purpose is to build an accurate, honest picture of this person as a ${profileName} candidate — capturing real strengths they have, even ones they struggle to articulate, while never inventing or exaggerating experience they don't have.
 

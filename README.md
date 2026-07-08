@@ -1,4 +1,4 @@
-# JobFlow
+# AngatCV
 
 An AI-powered job search assistant that helps you build tailored resumes, track applications, and present your best self to every employer — for any career path you want to pursue.
 

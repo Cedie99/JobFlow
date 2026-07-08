@@ -114,34 +114,41 @@ function BuildPageInner() {
   }
 
   return (
-    <div className="flex h-full overflow-hidden">
-    <div className="flex-1 overflow-y-auto">
-    <div className="p-6 flex flex-col min-h-full">
-      <div className="mb-6 shrink-0">
-        <h1 className="text-2xl font-bold">Build Resume from Profile</h1>
-        {/* Visual flow indicator */}
-        <div className="flex items-center gap-2 text-sm text-muted-foreground flex-wrap">
-          <span className="flex items-center gap-1.5">
-            <Layers className="h-3.5 w-3.5 text-primary/70" />
-            <span className="font-medium text-foreground/70">Career Profile</span>
-          </span>
-          <ArrowRight className="h-3.5 w-3.5 opacity-30" />
-          <span className="flex items-center gap-1.5">
-            <Target className="h-3.5 w-3.5" />
-            <span>Any Job Posting</span>
-          </span>
-          <ArrowRight className="h-3.5 w-3.5 opacity-30" />
-          <span className="flex items-center gap-1.5 text-emerald-600 font-medium">
-            <Wand2 className="h-3.5 w-3.5" />
-            Tailored Resume in Seconds
-          </span>
+    <div className="h-full overflow-y-auto lg:overflow-hidden">
+    <div className="lg:h-full">
+    <div className="p-4 sm:p-6 flex flex-col min-h-full lg:h-full">
+      <div className="mb-6 shrink-0 flex items-start justify-between gap-4 flex-wrap">
+        <div>
+          <h1 className="text-2xl font-bold">Build Resume from Profile</h1>
+          {/* Visual flow indicator */}
+          <div className="flex items-center gap-2 text-sm text-muted-foreground flex-wrap">
+            <span className="flex items-center gap-1.5">
+              <Layers className="h-3.5 w-3.5 text-primary/70" />
+              <span className="font-medium text-foreground/70">Career Profile</span>
+            </span>
+            <ArrowRight className="h-3.5 w-3.5 opacity-30" />
+            <span className="flex items-center gap-1.5">
+              <Target className="h-3.5 w-3.5" />
+              <span>Any Job Posting</span>
+            </span>
+            <ArrowRight className="h-3.5 w-3.5 opacity-30" />
+            <span className="flex items-center gap-1.5 text-emerald-600 font-medium">
+              <Wand2 className="h-3.5 w-3.5" />
+              Tailored Resume in Seconds
+            </span>
+          </div>
         </div>
+        <OptimizationHistory
+          onLoad={handleLoadFromHistory}
+          activeId={result?.savedId ?? null}
+          refreshTrigger={historyRevision}
+        />
       </div>
 
-      <div className="grid gap-6 flex-1 min-h-0 grid-cols-1 lg:grid-cols-2">
+      <div className="grid gap-6 grid-cols-1 lg:grid-cols-2 lg:flex-1 lg:min-h-0">
 
         {/* Left: Profile selector + JD input */}
-        <div className="space-y-4 overflow-y-auto">
+        <div className="space-y-4 lg:overflow-y-auto">
 
           {/* Profile selector */}
           <Card className={selectedProfile?.completed === false ? 'border-amber-200' : ''}>
@@ -374,7 +381,7 @@ function BuildPageInner() {
 
         {/* Right: Results */}
         {result ? (
-          <Card className="flex flex-col overflow-hidden">
+          <Card className="flex flex-col overflow-hidden h-[80vh] lg:h-auto">
             <CardHeader className="shrink-0">
               <CardTitle className="text-base">Tailored Resume</CardTitle>
               <CardDescription className="text-xs">
@@ -386,7 +393,7 @@ function BuildPageInner() {
             </CardContent>
           </Card>
         ) : (
-          <Card className="flex flex-col overflow-hidden">
+          <Card className="flex flex-col overflow-hidden min-h-[45vh] lg:min-h-0">
             <CardHeader className="shrink-0">
               <CardTitle className="text-base">Tailored Resume</CardTitle>
               <CardDescription className="text-xs">
@@ -412,17 +419,10 @@ function BuildPageInner() {
     </div>
     </div>
 
-    {/* ── History sidebar ───────────────────────────────── */}
-    <OptimizationHistory
-      onLoad={handleLoadFromHistory}
-      activeId={result?.savedId ?? null}
-      refreshTrigger={historyRevision}
-    />
-
     {/* ── History load modal ────────────────────────────── */}
     <Dialog open={!!modal} onOpenChange={(open) => { if (!open) setModal(null) }}>
-      <DialogContent showCloseButton={false} className="sm:max-w-3xl w-full h-[90vh] flex flex-col gap-0 p-0 overflow-hidden">
-        <div className="flex items-center gap-3 px-5 py-4 border-b border-border shrink-0">
+      <DialogContent showCloseButton={false} className="sm:max-w-3xl w-full h-[92dvh] sm:h-[90vh] flex flex-col gap-0 p-0 overflow-hidden">
+        <div className="flex items-center gap-3 px-4 sm:px-5 py-4 border-b border-border shrink-0">
           <div className="rounded-lg bg-primary/10 p-1.5">
             <FileText className="h-4 w-4 text-primary" />
           </div>
@@ -437,7 +437,7 @@ function BuildPageInner() {
             <X className="h-4 w-4" />
           </button>
         </div>
-        <div className="flex-1 min-h-0 p-5 overflow-hidden">
+        <div className="flex-1 min-h-0 p-4 sm:p-5 overflow-hidden">
           {modal && (
             <ResultsPanel
               result={modal.result}

@@ -1,3 +1,5 @@
+import Link from 'next/link'
+
 interface JobLogoProps {
   size?: 'sm' | 'md' | 'lg'
   light?: boolean
@@ -14,13 +16,13 @@ export default function JobLogo({ size = 'md', light = false }: JobLogoProps) {
   const text = light ? 'text-white' : 'text-foreground'
   const dot1 = light ? 'bg-white/30' : 'bg-foreground/20'
   const dot2 = light ? 'bg-white/55' : 'bg-foreground/40'
-  const dot3 = light ? 'bg-white/80' : 'bg-foreground/65'
-  const bar  = light ? 'bg-white'    : 'bg-primary'
+  const dot3 = 'bg-flame'
+  const bar  = 'bg-flame'
 
   return (
-    <div className="inline-flex items-end select-none leading-none">
+    <Link href="/" aria-label="AngatCV — home" className="inline-flex items-end select-none leading-none">
       <div className="flex flex-col">
-        <span className={`font-black ${s.text} leading-none tracking-[-0.03em] ${text}`}>job</span>
+        <span className={`font-black ${s.text} leading-none tracking-[-0.03em] ${text}`}>Angat</span>
         <div className={`flex items-center ${s.gap} ${s.mt}`}>
           <div className={`rounded-full ${dot1} ${s.dot}`} />
           <div className={`rounded-full ${dot2} ${s.dot}`} />
@@ -28,9 +30,9 @@ export default function JobLogo({ size = 'md', light = false }: JobLogoProps) {
         </div>
       </div>
       <div className="flex flex-col">
-        <span className={`font-black ${s.text} leading-none tracking-[-0.03em] ${text}`}>flow</span>
-        <div className={`${s.mt} ${s.bar} w-full rounded-full ${bar}`} />
+        <span className={`font-black ${s.text} leading-none tracking-[-0.03em] ${text}`}>CV</span>
+        <div className={`${s.mt} ${bar} w-full rounded-full`} />
       </div>
-    </div>
+    </Link>
   )
 }

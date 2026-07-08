@@ -16,7 +16,7 @@ import {
 } from 'date-fns'
 
 const PIPELINE_STAGES = [
-  { key: 'applied',   label: 'Applied',   color: 'bg-blue-500',    track: 'bg-blue-100' },
+  { key: 'applied',   label: 'Applied',   color: 'bg-teal-600',    track: 'bg-teal-100' },
   { key: 'screening', label: 'Screening', color: 'bg-amber-500',   track: 'bg-amber-100' },
   { key: 'interview', label: 'Interview', color: 'bg-violet-500',  track: 'bg-violet-100' },
   { key: 'offer',     label: 'Offer',     color: 'bg-emerald-500', track: 'bg-emerald-100' },
@@ -80,11 +80,12 @@ export default async function DashboardPage() {
   ]
 
   return (
-    <div className="p-6 space-y-4">
+    <div className="p-4 sm:p-6 space-y-4">
 
       {/* ── Header strip ────────────────────────────────────── */}
-      <div className="rounded-2xl border bg-gradient-to-br from-primary/[0.06] via-card to-card px-7 py-5 flex items-center justify-between gap-6 flex-wrap">
-        <div>
+      <div className="relative overflow-hidden rounded-2xl border bg-gradient-to-br from-primary/10 via-card to-flame/[0.07] px-5 sm:px-7 py-5 flex items-center justify-between gap-6 flex-wrap">
+        <div className="pointer-events-none absolute -top-16 -right-12 h-44 w-44 rounded-full bg-flame/10 blur-3xl" />
+        <div className="relative">
           <h1 className="text-2xl font-bold tracking-tight">
             Good {getGreeting()}, {displayName} 👋
           </h1>
@@ -94,9 +95,9 @@ export default async function DashboardPage() {
         </div>
 
         {/* Inline stat pills */}
-        <div className="flex items-stretch divide-x rounded-xl border bg-background/80 overflow-hidden shadow-sm">
+        <div className="relative flex items-stretch divide-x rounded-xl border bg-card/90 overflow-hidden shadow-sm w-full sm:w-auto">
           {STAT_COLS.map((s) => (
-            <div key={s.label} className="flex flex-col items-center justify-center px-6 py-3 min-w-[84px]">
+            <div key={s.label} className="flex flex-col items-center justify-center px-3.5 sm:px-6 py-3 min-w-0 flex-1 sm:min-w-[84px]">
               <span className={cn('text-2xl font-bold tabular-nums leading-none', s.color)}>
                 {s.value}
               </span>
@@ -109,10 +110,10 @@ export default async function DashboardPage() {
       </div>
 
       {/* ── Row: Today's Focus (2/3) + This Week (1/3) ──────── */}
-      <div className="grid grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
 
         {/* Today's Focus */}
-        <div className="col-span-2 rounded-2xl border bg-card flex flex-col">
+        <div className="lg:col-span-2 rounded-2xl border bg-card flex flex-col">
           <div className="flex items-center justify-between px-6 pt-5 pb-3">
             <div className="flex items-center gap-2">
               {hasActions
@@ -191,18 +192,18 @@ export default async function DashboardPage() {
                 )}
 
                 {noFollowUpCount > 0 && (
-                  <div className="flex items-center gap-4 rounded-xl bg-blue-50 border border-blue-100 px-4 py-3.5">
-                    <span className="h-2.5 w-2.5 rounded-full bg-blue-400 shrink-0" />
+                  <div className="flex items-center gap-4 rounded-xl bg-teal-50 border border-teal-100 px-4 py-3.5">
+                    <span className="h-2.5 w-2.5 rounded-full bg-teal-500 shrink-0" />
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm font-semibold text-blue-800">
+                      <p className="text-sm font-semibold text-teal-800">
                         {noFollowUpCount} active application{noFollowUpCount !== 1 ? 's' : ''} without a follow-up date
                       </p>
-                      <p className="text-xs text-blue-700/70 mt-0.5">
+                      <p className="text-xs text-teal-700/70 mt-0.5">
                         Set reminders so nothing falls through the cracks
                       </p>
                     </div>
                     <Link href="/tracker">
-                      <Button variant="ghost" size="sm" className="shrink-0 text-blue-700 hover:bg-blue-100 h-7 text-xs px-2.5">
+                      <Button variant="ghost" size="sm" className="shrink-0 text-teal-700 hover:bg-teal-100 h-7 text-xs px-2.5">
                         Set dates →
                       </Button>
                     </Link>
@@ -278,7 +279,7 @@ export default async function DashboardPage() {
       </div>
 
       {/* ── Row: Activity chart (1/2) + Follow-ups (1/2) ────── */}
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         <DashboardCharts applications={allApplications || []} />
 
         {/* Follow-ups */}
@@ -349,7 +350,7 @@ export default async function DashboardPage() {
         </div>
 
         {total > 0 ? (
-          <div className="grid grid-cols-4 gap-6">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-x-6 gap-y-5">
             {PIPELINE_STAGES.map(({ key, label, color, track }) => {
               const count = pipeline.stages[key] ?? 0
               const pct = Math.round((count / total) * 100)

@@ -82,8 +82,8 @@ export default function StatsCards({ stats }: StatsCardsProps) {
         value={total}
         sub={rejections > 0 ? `${rejections} rejection${rejections !== 1 ? 's' : ''}` : 'No rejections yet'}
         icon={Briefcase}
-        iconBg="bg-blue-50"
-        iconColor="text-blue-600"
+        iconBg="bg-primary/10"
+        iconColor="text-primary"
         href="/tracker"
       />
       <StatCard

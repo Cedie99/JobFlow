@@ -13,7 +13,7 @@ import {
 import {
   MoreHorizontal, ExternalLink, Pencil, Trash2,
   Search, Sparkles, ChevronLeft, ChevronRight,
-  MapPin, Bell, Inbox,
+  MapPin, Bell, Inbox, X,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { format, formatDistanceToNowStrict, differenceInDays } from 'date-fns'
@@ -22,7 +22,7 @@ import type { JobApplication } from '@/types'
 // ── Status config ─────────────────────────────────────────────────────────────
 const STATUS: Record<string, { label: string; badge: string; filterActive: string; filterInactive: string }> = {
   all:       { label: 'All',       badge: '',                                                      filterActive: 'bg-primary text-primary-foreground shadow-sm',                           filterInactive: 'bg-muted text-muted-foreground hover:text-foreground hover:bg-secondary' },
-  applied:   { label: 'Applied',   badge: 'bg-blue-50 text-blue-700 ring-1 ring-blue-200',         filterActive: 'bg-blue-100 text-blue-700 ring-1 ring-blue-300 shadow-sm',              filterInactive: 'text-muted-foreground hover:text-blue-600 hover:bg-blue-50/50' },
+  applied:   { label: 'Applied',   badge: 'bg-primary/10 text-primary ring-1 ring-primary/25',     filterActive: 'bg-primary/15 text-primary ring-1 ring-primary/35 shadow-sm',           filterInactive: 'text-muted-foreground hover:text-primary hover:bg-primary/5' },
   screening: { label: 'Screening', badge: 'bg-amber-50 text-amber-700 ring-1 ring-amber-200',      filterActive: 'bg-amber-100 text-amber-700 ring-1 ring-amber-300 shadow-sm',           filterInactive: 'text-muted-foreground hover:text-amber-600 hover:bg-amber-50/50' },
   interview: { label: 'Interview', badge: 'bg-violet-50 text-violet-700 ring-1 ring-violet-200',   filterActive: 'bg-violet-100 text-violet-700 ring-1 ring-violet-300 shadow-sm',         filterInactive: 'text-muted-foreground hover:text-violet-600 hover:bg-violet-50/50' },
   offer:     { label: 'Offer',     badge: 'bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200',filterActive: 'bg-emerald-100 text-emerald-700 ring-1 ring-emerald-300 shadow-sm',      filterInactive: 'text-muted-foreground hover:text-emerald-600 hover:bg-emerald-50/50' },
@@ -162,7 +162,7 @@ function AppCard({
               <Button
                 variant="ghost"
                 size="icon"
-                className="h-7 w-7 opacity-0 group-hover:opacity-100 transition-opacity"
+                className="h-7 w-7 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity"
               />
             }
           >
@@ -253,37 +253,58 @@ export default function ApplicationTable({ applications, onEdit, onDelete }: App
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           placeholder="Search company, role, location…"
-          className="pl-9 h-10 focus:ring-2 focus:ring-primary/20 transition-shadow"
+          className="pl-9 pr-9 h-10 focus:ring-2 focus:ring-primary/20 transition-shadow"
         />
+        {search && (
+          <button
+            onClick={() => setSearch('')}
+            aria-label="Clear search"
+            className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center justify-center h-6 w-6 rounded-full text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+          >
+            <X className="h-3.5 w-3.5" />
+          </button>
+        )}
       </div>
 
-      {/* Status filter chips with live counts */}
-      <div className="flex gap-1.5 flex-wrap">
-        {STATUS_ORDER.map((s) => {
-          const cfg = STATUS[s]
-          const count = s === 'all' ? applications.length : (countByStatus[s] ?? 0)
-          if (s !== 'all' && count === 0) return null
-          return (
-            <button
-              key={s}
-              onClick={() => setStatusFilter(s)}
-              className={cn(
-                'flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium transition-all duration-150 whitespace-nowrap',
-                statusFilter === s ? cfg.filterActive : cfg.filterInactive,
-              )}
-            >
-              {cfg.label}
-              <span
+      {/* Status filter chips — swipeable rail on mobile, wrapping on desktop */}
+      <div className="relative -mx-4 sm:mx-0">
+        <div
+          className={cn(
+            'flex gap-1.5 overflow-x-auto px-4 pb-0.5 sm:px-0 sm:pb-0 sm:flex-wrap sm:overflow-visible',
+            '[scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden'
+          )}
+        >
+          {STATUS_ORDER.map((s) => {
+            const cfg = STATUS[s]
+            const count = s === 'all' ? applications.length : (countByStatus[s] ?? 0)
+            if (s !== 'all' && count === 0) return null
+            const isActive = statusFilter === s
+            return (
+              <button
+                key={s}
+                onClick={() => setStatusFilter(s)}
                 className={cn(
-                  'inline-flex items-center justify-center rounded-full text-[10px] font-semibold min-w-[16px] h-4 px-0.5',
-                  statusFilter === s ? 'bg-black/10 text-current' : 'bg-muted-foreground/15 text-muted-foreground',
+                  'shrink-0 flex items-center gap-1.5 px-3 py-1.5 sm:py-1 rounded-full text-xs font-medium transition-all duration-150 whitespace-nowrap',
+                  isActive ? cfg.filterActive : cfg.filterInactive,
                 )}
               >
-                {count}
-              </span>
-            </button>
-          )
-        })}
+                {cfg.label}
+                <span
+                  className={cn(
+                    'inline-flex items-center justify-center rounded-full text-[10px] font-semibold min-w-[16px] h-4 px-0.5',
+                    isActive ? 'bg-black/10 text-current' : 'bg-muted-foreground/15 text-muted-foreground',
+                  )}
+                >
+                  {count}
+                </span>
+              </button>
+            )
+          })}
+        </div>
+
+        {/* Edge fades hint that the rail scrolls (mobile only) */}
+        <div className="pointer-events-none absolute inset-y-0 left-0 w-4 bg-gradient-to-r from-background to-transparent sm:hidden" />
+        <div className="pointer-events-none absolute inset-y-0 right-0 w-6 bg-gradient-to-l from-background to-transparent sm:hidden" />
       </div>
 
       {/* Grouped card list */}

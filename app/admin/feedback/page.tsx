@@ -16,13 +16,13 @@ const TYPE_LABELS: Record<FeedbackType, string> = {
 
 const TYPE_STYLES: Record<FeedbackType, string> = {
   bug: 'bg-red-500/10 text-red-600 border-red-500/20',
-  feature: 'bg-blue-500/10 text-blue-600 border-blue-500/20',
+  feature: 'bg-teal-500/10 text-teal-600 border-teal-500/20',
   general: 'bg-muted text-muted-foreground',
 }
 
 const STATUS_STYLES: Record<FeedbackStatus, string> = {
   open: 'bg-amber-500/10 text-amber-600 border-amber-500/20',
-  reviewed: 'bg-blue-500/10 text-blue-600 border-blue-500/20',
+  reviewed: 'bg-teal-500/10 text-teal-600 border-teal-500/20',
   closed: 'bg-muted text-muted-foreground',
 }
 

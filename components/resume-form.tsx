@@ -174,7 +174,7 @@ export default function ResumeForm({ onResult, onLoading, loading }: ResumeFormP
           value={jobDescription}
           onChange={(e) => setJobDescription(e.target.value)}
           placeholder="Paste the full job description here..."
-          className="h-[160px] resize-none overflow-y-auto text-sm"
+          className="h-[320px] lg:h-[380px] resize-none overflow-y-auto text-sm"
           required
         />
       </div>

@@ -9,9 +9,16 @@ import {
   RefreshCw,
   Sparkles,
 } from 'lucide-react'
-import { formatDistanceToNowStrict, format, isToday, isYesterday } from 'date-fns'
+import { format, isToday, isYesterday } from 'date-fns'
 import { cn } from '@/lib/utils'
 import { toast } from 'sonner'
+import { Button } from '@/components/ui/button'
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+} from '@/components/ui/sheet'
 import type { OptimizeResponse, SavedOptimization } from '@/types'
 
 interface OptimizationHistoryProps {
@@ -30,6 +37,7 @@ function formatItemDate(iso: string) {
 export default function OptimizationHistory({ onLoad, activeId, refreshTrigger }: OptimizationHistoryProps) {
   const [items, setItems]       = useState<SavedOptimization[]>([])
   const [fetching, setFetching] = useState(false)
+  const [open, setOpen]         = useState(false)
   const [loadingId, setLoadingId]   = useState<string | null>(null)
   const [deletingId, setDeletingId] = useState<string | null>(null)
   const [exitingId, setExitingId]   = useState<string | null>(null)
@@ -57,6 +65,7 @@ export default function OptimizationHistory({ onLoad, activeId, refreshTrigger }
       if (!res.ok) throw new Error()
       const data = await res.json()
       onLoad({ ...(data.result as OptimizeResponse), savedId: data.id, resumePdfHtml: data.resume_pdf_html ?? null }, data.label ?? '')
+      setOpen(false)
       toast.success('Optimization loaded')
     } catch {
       toast.error('Could not load this optimization')
@@ -85,135 +94,132 @@ export default function OptimizationHistory({ onLoad, activeId, refreshTrigger }
   }
 
   return (
-    <aside className="w-72 shrink-0 border-l border-border bg-card h-full flex flex-col overflow-hidden">
+    <>
+      {/* Trigger */}
+      <Button
+        variant="outline"
+        size="sm"
+        className="gap-2 shrink-0"
+        onClick={() => setOpen(true)}
+      >
+        <History className="h-4 w-4" />
+        History
+        {items.length > 0 && (
+          <span className="ml-0.5 text-[10px] font-semibold bg-primary text-primary-foreground rounded-full px-1.5 py-0.5 leading-none">
+            {items.length}
+          </span>
+        )}
+      </Button>
 
-      {/* ── Header ───────────────────────────────────────────── */}
-      <div className="flex items-center justify-between px-4 py-3.5 border-b border-border shrink-0">
-        <div className="flex items-center gap-2.5">
-          <div className="rounded-lg bg-primary/10 p-1.5">
-            <History className="h-3.5 w-3.5 text-primary" />
-          </div>
-          <div>
-            <p className="text-sm font-semibold leading-none">History</p>
-            <p className="text-[10px] text-muted-foreground mt-0.5 leading-none">
-              {fetching ? 'Loading…' : `${items.length} saved`}
+      {/* Side drawer */}
+      <Sheet open={open} onOpenChange={setOpen}>
+        <SheetContent className="p-0 flex flex-col">
+          <SheetHeader className="px-5 pt-5 pb-4 border-b">
+            <div className="flex items-center justify-between pr-9">
+              <SheetTitle className="text-base">History</SheetTitle>
+              <button
+                onClick={fetchHistory}
+                disabled={fetching}
+                title="Refresh"
+                className="text-muted-foreground hover:text-foreground transition-colors disabled:opacity-40"
+              >
+                <RefreshCw className={cn('h-3.5 w-3.5', fetching && 'animate-spin')} />
+              </button>
+            </div>
+            <p className="text-xs text-muted-foreground">
+              {fetching ? 'Loading...' : `${items.length} saved optimization${items.length !== 1 ? 's' : ''}`}
             </p>
-          </div>
-        </div>
-        <button
-          onClick={fetchHistory}
-          disabled={fetching}
-          title="Refresh"
-          className="flex items-center justify-center h-7 w-7 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted transition-colors disabled:opacity-40"
-        >
-          <RefreshCw className={cn('h-3.5 w-3.5', fetching && 'animate-spin')} />
-        </button>
-      </div>
+          </SheetHeader>
 
-      {/* ── Body ─────────────────────────────────────────────── */}
-      {fetching ? (
-        <div className="flex-1 flex flex-col items-center justify-center gap-3 text-muted-foreground">
-          <Loader2 className="h-5 w-5 animate-spin" />
-          <p className="text-xs">Loading history…</p>
-        </div>
+          <div className="flex-1 overflow-y-auto">
+            {fetching ? (
+              <div className="flex items-center justify-center py-16 text-muted-foreground">
+                <Loader2 className="h-5 w-5 animate-spin" />
+              </div>
+            ) : items.length === 0 ? (
+              <div className="flex flex-col items-center justify-center py-16 px-6 text-center">
+                <div className="rounded-full bg-muted p-4 mb-3">
+                  <History className="h-5 w-5 text-muted-foreground/40" />
+                </div>
+                <p className="text-sm font-medium">No history yet</p>
+                <p className="text-xs text-muted-foreground mt-1 leading-relaxed">
+                  Optimized resumes are saved automatically after generation.
+                </p>
+              </div>
+            ) : (
+              <ul className="p-3 space-y-1">
+                {items.map((item) => {
+                  const isActive   = item.id === activeId
+                  const isLoading  = loadingId  === item.id
+                  const isDeleting = deletingId === item.id
+                  const isExiting  = exitingId  === item.id
 
-      ) : items.length === 0 ? (
-        <div className="flex-1 flex flex-col items-center justify-center gap-3 px-6 text-center">
-          <div className="rounded-full bg-muted p-4">
-            <History className="h-5 w-5 text-muted-foreground/40" />
-          </div>
-          <div>
-            <p className="text-sm font-medium">No history yet</p>
-            <p className="text-xs text-muted-foreground mt-1 leading-relaxed">
-              Optimized resumes are saved automatically after generation.
-            </p>
-          </div>
-        </div>
-
-      ) : (
-        <div className="flex-1 overflow-y-auto">
-          <ul className="p-2.5 space-y-1.5">
-            {items.map((item, i) => {
-              const isActive   = item.id === activeId
-              const isLoading  = loadingId  === item.id
-              const isDeleting = deletingId === item.id
-              const isExiting  = exitingId  === item.id
-
-              return (
-                <li
-                  key={item.id}
-                  onClick={() => !isLoading && !isDeleting && handleLoad(item.id)}
-                  className={cn(
-                    'group relative rounded-lg border cursor-pointer',
-                    'transition-all duration-200 ease-out',
-                    isActive
-                      ? 'border-primary/50 bg-primary/10 shadow-md'
-                      : 'border-border bg-card hover:border-primary/30 hover:bg-muted/50 hover:shadow-sm',
-                    isExiting && 'opacity-0 scale-95 translate-x-2 pointer-events-none'
-                  )}
-                  style={{ animationDelay: `${i * 30}ms` }}
-                >
-                  <div className="flex items-center gap-3 p-3">
-                    {/* Icon */}
-                    <div className={cn(
-                      'rounded-lg p-2 shrink-0 transition-colors duration-200',
-                      isActive
-                        ? 'bg-primary/20 text-primary'
-                        : 'bg-muted text-muted-foreground group-hover:bg-primary/10 group-hover:text-primary'
-                    )}>
-                      {isLoading ? (
-                        <Loader2 className="h-4 w-4 animate-spin" />
-                      ) : (
-                        <FileText className="h-4 w-4" />
-                      )}
-                    </div>
-
-                    {/* Content */}
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2">
-                        <p className={cn(
-                          'text-sm font-medium truncate',
-                          isActive ? 'text-primary' : 'text-foreground group-hover:text-primary'
-                        )}>
-                          {item.label}
-                        </p>
-                        {isActive && (
-                          <span className="shrink-0 inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-primary text-primary-foreground">
-                            <Sparkles className="h-2.5 w-2.5" />
-                            Active
-                          </span>
-                        )}
-                      </div>
-                      <p className="text-xs text-muted-foreground mt-0.5">
-                        {formatItemDate(item.created_at)}
-                      </p>
-                    </div>
-
-                    {/* Delete button */}
-                    <button
-                      onClick={(e) => handleDelete(item.id, e)}
-                      disabled={isDeleting || !!loadingId}
-                      title="Delete"
+                  return (
+                    <li
+                      key={item.id}
+                      onClick={() => !isLoading && !isDeleting && handleLoad(item.id)}
                       className={cn(
-                        'flex items-center justify-center h-8 w-8 rounded-lg shrink-0 transition-all duration-200',
-                        'text-muted-foreground hover:text-destructive hover:bg-destructive/10',
-                        'opacity-0 group-hover:opacity-100 focus:opacity-100',
-                        'disabled:opacity-40 disabled:cursor-not-allowed'
+                        'group relative rounded-xl border cursor-pointer transition-all duration-200',
+                        isActive
+                          ? 'border-primary/40 bg-primary/8'
+                          : 'border-transparent hover:border-border hover:bg-muted/50',
+                        isExiting && 'opacity-0 scale-95 pointer-events-none'
                       )}
                     >
-                      {isDeleting ? (
-                        <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                      ) : (
-                        <Trash2 className="h-3.5 w-3.5" />
-                      )}
-                    </button>
-                  </div>
-                </li>
-              )
-            })}
-          </ul>
-        </div>
-      )}
-    </aside>
+                      <div className="flex items-start gap-3 p-3">
+                        <div className={cn(
+                          'rounded-lg p-2 shrink-0 mt-0.5 transition-colors',
+                          isActive ? 'bg-primary/15 text-primary' : 'bg-muted text-muted-foreground'
+                        )}>
+                          {isLoading
+                            ? <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                            : <FileText className="h-3.5 w-3.5" />
+                          }
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-1.5">
+                            <p className={cn(
+                              'text-xs font-medium truncate',
+                              isActive ? 'text-primary' : 'text-foreground'
+                            )}>
+                              {item.label}
+                            </p>
+                            {isActive && (
+                              <span className="shrink-0 flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[9px] font-semibold bg-primary text-primary-foreground">
+                                <Sparkles className="h-2 w-2" />
+                                Active
+                              </span>
+                            )}
+                          </div>
+                          <p className="text-[10px] text-muted-foreground mt-0.5">
+                            {formatItemDate(item.created_at)}
+                          </p>
+                        </div>
+                        <button
+                          onClick={(e) => handleDelete(item.id, e)}
+                          disabled={isDeleting || !!loadingId}
+                          title="Delete"
+                          className={cn(
+                            'flex items-center justify-center h-6 w-6 rounded-lg transition-all shrink-0',
+                            'text-muted-foreground hover:text-destructive hover:bg-destructive/10',
+                            'opacity-100 lg:opacity-0 lg:group-hover:opacity-100 focus:opacity-100',
+                            'disabled:opacity-40 disabled:cursor-not-allowed'
+                          )}
+                        >
+                          {isDeleting
+                            ? <Loader2 className="h-3 w-3 animate-spin" />
+                            : <Trash2 className="h-3 w-3" />
+                          }
+                        </button>
+                      </div>
+                    </li>
+                  )
+                })}
+              </ul>
+            )}
+          </div>
+        </SheetContent>
+      </Sheet>
+    </>
   )
 }

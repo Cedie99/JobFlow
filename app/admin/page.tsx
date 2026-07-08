@@ -27,7 +27,7 @@ export default async function AdminOverviewPage() {
     .slice(0, 8)
 
   const stats = [
-    { label: 'Total Users', value: users.length, icon: Users, color: 'text-blue-500', bg: 'bg-blue-500/10' },
+    { label: 'Total Users', value: users.length, icon: Users, color: 'text-teal-600', bg: 'bg-teal-500/10' },
     { label: 'Pro Subscribers', value: subscriberCount ?? 0, icon: CreditCard, color: 'text-green-500', bg: 'bg-green-500/10' },
     { label: 'Open Feedback', value: openFeedbackCount ?? 0, icon: MessageSquare, color: 'text-amber-500', bg: 'bg-amber-500/10' },
     { label: 'Active Announcements', value: activeAnnouncementCount ?? 0, icon: Bell, color: 'text-purple-500', bg: 'bg-purple-500/10' },

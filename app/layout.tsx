@@ -21,8 +21,8 @@ const geistMono = Geist_Mono({
 })
 
 export const metadata: Metadata = {
-  title: 'jobflow — Resume Optimizer & Application Tracker',
-  description: 'AI-powered resume optimization and job application tracking',
+  title: 'AngatCV — Resume Optimizer, Interview Prep & Application Tracker',
+  description: 'AI-powered resume optimization, interview question generation, and job application tracking',
 }
 
 export default function RootLayout({

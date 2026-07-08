@@ -59,14 +59,14 @@ export default function FeedbackDialog({ collapsed }: FeedbackDialogProps) {
         <button
           title="Send Feedback"
           onClick={() => setOpen(true)}
-          className="flex items-center justify-center h-9 w-9 rounded-md text-white hover:text-white/80 hover:bg-blue-700 transition-colors"
+          className="flex items-center justify-center h-9 w-9 rounded-md text-sidebar-foreground/80 hover:text-sidebar-foreground hover:bg-sidebar-accent transition-colors"
         >
           <MessageSquare className="h-4 w-4" />
         </button>
       ) : (
         <button
           onClick={() => setOpen(true)}
-          className="flex items-center gap-2.5 w-full px-3 py-2 rounded-lg text-sm text-white hover:bg-blue-700 hover:text-white/80 transition-colors"
+          className="flex items-center gap-2.5 w-full px-3 py-2 rounded-lg text-sm text-sidebar-foreground/80 hover:bg-sidebar-accent hover:text-sidebar-foreground transition-colors"
         >
           <span className="inline-flex items-center justify-center w-7 h-7 rounded-md shrink-0">
             <MessageSquare className="h-4 w-4" />
